@@ -1,8 +1,8 @@
-const CACHE_NAME = "qr-registro-cache-v2";
+const CACHE_NAME = "qr-registro-cache-v20260212";
 
 const FILES_TO_CACHE = [
   "./",
-  "./index.html",
+  "./index.html?v=20260212",
   "./app.js",
   "./style.css",
   "./manifest.json"
@@ -24,3 +24,4 @@ self.addEventListener("fetch", (event) => {
   );
 
 });
+
