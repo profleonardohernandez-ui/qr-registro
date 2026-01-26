@@ -1,0 +1,8 @@
+{
+  "name": "Registro QR",
+  "short_name": "QR Registro",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
