@@ -11,29 +11,31 @@
 <body>
 
   <p style="font-size:12px;color:gray;">
-    Versión: 2026-02-12-01
+    Versión: 2026-02-12-02
   </p>
 
   <h1>Registro por QR</h1>
 
   <button id="scanBtn">Escanear QR</button>
-
   <div id="resultado"></div>
 
   <button id="verRegistrosBtn">Ver registros</button>
-
   <div id="listaRegistros"></div>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="app.js"></script>
+  <!-- Librería QR local (offline real) -->
+  <script src="html5-qrcode.min.js"></script>
 
-  <!-- Service Worker (activo) -->
+  <!-- App JS versionado (evita mezcla) -->
+  <script src="app.20260212-02.js"></script>
+
+  <!-- Service Worker -->
   <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" })
+        .then(reg => reg.update())
+        .catch(err => console.error("SW error", err));
+    }
+  </script>
 
 </body>
 </html>
-
-
-
-
-
