@@ -1,4 +1,4 @@
-const BUILD = "20260212-04";
+const BUILD = "20260212-05";
 const CACHE_NAME = `qr-registro-${BUILD}`;
 
 const FILES_TO_CACHE = [
@@ -10,7 +10,7 @@ const FILES_TO_CACHE = [
   `./app.${BUILD}.js`
 ];
 
-// 1) Install: precache + activar ya
+// Install: cache + activar inmediatamente
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -18,7 +18,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// 2) Activate: claim + borrar caches viejos
+// Activate: claim + borrar caches viejos
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
@@ -31,21 +31,20 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-// 3) Fetch:
+// Fetch:
 // - Navegación (HTML): Network First
 // - Estáticos: Cache First
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Solo controlamos mismo origen (tu GitHub Pages)
+  // Solo mismo origen
   if (url.origin !== self.location.origin) return;
 
   // HTML principal
   if (req.mode === "navigate") {
     event.respondWith((async () => {
       try {
-        // cache: "no-store" evita el cache HTTP del navegador
         const fresh = await fetch(req, { cache: "no-store" });
         return fresh;
       } catch {
@@ -55,7 +54,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Archivos estáticos
+  // Estáticos
   event.respondWith((async () => {
     const cached = await caches.match(req);
     if (cached) return cached;
@@ -70,5 +69,3 @@ self.addEventListener("fetch", (event) => {
     }
   })());
 });
-
-
