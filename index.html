@@ -1,43 +1,56 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Registro QR</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1220">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div class="container">
-    <div class="header">
-      <h1>Registro por QR</h1>
+
+    <header class="header">
+      <div>
+        <h1>Registro por QR</h1>
+        <div class="small" style="margin-top:6px;">
+          <span id="netStatus" class="badge" style="display:inline-block;">Estado: —</span>
+          <span class="badge" style="display:inline-block;">Datos: solo en este dispositivo</span>
+        </div>
+      </div>
       <div class="badge">Versión: 2026-02-12-04</div>
-    </div>
+    </header>
 
-    <div class="grid">
+    <main class="grid">
 
-      <div class="card">
-        <h2>1) Escanear</h2>
-        <p class="sub">Escanea un QR y luego define el tipo de evento antes de guardar.</p>
+      <!-- Tarjeta: Escaneo + Formulario -->
+      <section class="card" aria-label="Nuevo registro">
+        <h2>Nuevo registro</h2>
+        <p class="sub">Escanea un QR, clasifica el evento y guarda. (Funciona offline.)</p>
 
         <div class="row">
-          <button class="btn primary" id="scanBtn">Escanear QR</button>
-          <button class="btn ghost" id="cancelScanBtn" style="display:none;">Cancelar escaneo</button>
+          <button type="button" class="btn primary" id="scanBtn">Escanear QR</button>
+          <button type="button" class="btn ghost" id="cancelScanBtn" style="display:none;">Cancelar escaneo</button>
         </div>
 
         <div class="hr"></div>
 
-        <div id="qr-reader" style="display:none;"></div>
+        <div id="qr-reader" style="display:none;" aria-label="Lector de QR"></div>
 
-        <div id="resultado" class="notice">Listo para escanear.</div>
+        <div id="resultado" class="notice" role="status" aria-live="polite">
+          Listo para escanear.
+        </div>
 
+        <!-- Formulario de evento -->
         <div id="formEvento" style="display:none;">
           <div class="hr"></div>
 
-          <h2>2) Guardar evento</h2>
-          <div class="row">
+          <h2>Guardar evento</h2>
+
+          <div class="row" style="align-items:flex-start;">
             <div class="badge" id="codigoActual">Código: —</div>
             <div class="badge" id="horaActual">Hora: —</div>
           </div>
@@ -74,34 +87,65 @@
           </div>
 
           <div class="row" style="margin-top:10px;">
-            <button class="btn primary" id="guardarBtn">Guardar evento</button>
-            <button class="btn ghost" id="nuevoScanBtn">Escanear otro</button>
+            <button type="button" class="btn primary" id="guardarBtn">Guardar evento</button>
+            <button type="button" class="btn ghost" id="nuevoScanBtn">Escanear otro</button>
           </div>
 
           <p class="small">Tip: si solo quieres registrar inasistencias, deja “Inasistencia” y guarda.</p>
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <h2>Registros</h2>
-        <p class="sub">Consulta y administración local (sin internet).</p>
-
-        <div class="row">
-          <button class="btn ghost" id="verRegistrosBtn">Ver registros</button>
-          <button class="btn warn" id="limpiarHoyBtn">Limpiar hoy</button>
-          <button class="btn danger" id="borrarTodoBtn">Borrar todo</button>
+      <!-- Tarjeta: Historial -->
+      <section class="card" aria-label="Historial local">
+        <div class="row" style="justify-content:space-between; align-items:flex-end;">
+          <div>
+            <h2 style="margin-bottom:6px;">Registros</h2>
+            <p class="sub" style="margin:0;">Consulta y administración local (sin internet).</p>
+          </div>
+          <div class="badge" id="countBadge">Total: —</div>
         </div>
 
-        <div id="listaRegistros" class="list"></div>
-      </div>
+        <div class="hr"></div>
 
-    </div>
+        <div class="row">
+          <button type="button" class="btn ghost" id="verRegistrosBtn">Ver registros</button>
+          <button type="button" class="btn warn" id="limpiarHoyBtn">Limpiar hoy</button>
+          <button type="button" class="btn danger" id="borrarTodoBtn">Borrar todo</button>
+        </div>
+
+        <div id="listaRegistros" class="list" aria-live="polite"></div>
+
+        <p class="small" style="margin-top:10px;">
+          Sugerencia: usa “Limpiar hoy” al terminar la jornada para mantener el historial liviano.
+        </p>
+      </section>
+
+    </main>
+
+    <noscript>
+      <div class="card" style="margin-top:14px;">
+        Esta app requiere JavaScript para funcionar.
+      </div>
+    </noscript>
+
   </div>
 
   <script src="html5-qrcode.min.js"></script>
   <script src="app.20260212-04.js"></script>
 
   <script>
+    // Indicador simple de conectividad (no afecta tu lógica)
+    (function () {
+      const el = document.getElementById("netStatus");
+      function paint() {
+        el.textContent = navigator.onLine ? "Estado: Online" : "Estado: Offline";
+      }
+      window.addEventListener("online", paint);
+      window.addEventListener("offline", paint);
+      paint();
+    })();
+
+    // Service Worker
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" })
         .then(reg => reg.update())
@@ -110,3 +154,4 @@
   </script>
 </body>
 </html>
+
