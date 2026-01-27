@@ -4,33 +4,103 @@
   <meta charset="UTF-8">
   <title>Registro QR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+  <div class="container">
+    <div class="header">
+      <h1>Registro por QR</h1>
+      <div class="badge">Versión: 2026-02-12-04</div>
+    </div>
 
-  <p style="font-size:12px;color:gray;">
-    Versión: 2026-02-12-03
-  </p>
+    <div class="grid">
 
-  <h1>Registro por QR</h1>
+      <div class="card">
+        <h2>1) Escanear</h2>
+        <p class="sub">Escanea un QR y luego define el tipo de evento antes de guardar.</p>
 
-  <button id="scanBtn">Escanear QR</button>
-  <div id="resultado"></div>
+        <div class="row">
+          <button class="btn primary" id="scanBtn">Escanear QR</button>
+          <button class="btn ghost" id="cancelScanBtn" style="display:none;">Cancelar escaneo</button>
+        </div>
 
-  <button id="verRegistrosBtn">Ver registros</button>
-  <button id="limpiarHoyBtn">Limpiar registros de hoy</button>
-  <button id="borrarTodoBtn">Borrar todo</button>
-  <div id="listaRegistros"></div>
+        <div class="hr"></div>
 
-  <!-- Librería QR local (offline real) -->
+        <div id="qr-reader" style="display:none;"></div>
+
+        <div id="resultado" class="notice">Listo para escanear.</div>
+
+        <div id="formEvento" style="display:none;">
+          <div class="hr"></div>
+
+          <h2>2) Guardar evento</h2>
+          <div class="row">
+            <div class="badge" id="codigoActual">Código: —</div>
+            <div class="badge" id="horaActual">Hora: —</div>
+          </div>
+
+          <div class="field">
+            <label for="tipo">Tipo</label>
+            <select id="tipo">
+              <option value="INASISTENCIA">Inasistencia</option>
+              <option value="TARDE">Llegada tarde</option>
+              <option value="CONVIVENCIA">Convivencia</option>
+            </select>
+          </div>
+
+          <div class="field" id="wrapExcusa" style="display:none;">
+            <label for="excusa">Excusa</label>
+            <select id="excusa">
+              <option value="SIN_EXCUSA">Sin excusa</option>
+              <option value="CON_EXCUSA">Con excusa</option>
+            </select>
+          </div>
+
+          <div class="field" id="wrapNivel" style="display:none;">
+            <label for="nivel">Nivel</label>
+            <select id="nivel">
+              <option value="LEVE">Leve</option>
+              <option value="MODERADO">Moderado</option>
+              <option value="GRAVE">Grave</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="obs">Observación (opcional)</label>
+            <textarea id="obs" placeholder="Ej: llegó 10 min tarde por transporte / llamado de atención por ruido..."></textarea>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <button class="btn primary" id="guardarBtn">Guardar evento</button>
+            <button class="btn ghost" id="nuevoScanBtn">Escanear otro</button>
+          </div>
+
+          <p class="small">Tip: si solo quieres registrar inasistencias, deja “Inasistencia” y guarda.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Registros</h2>
+        <p class="sub">Consulta y administración local (sin internet).</p>
+
+        <div class="row">
+          <button class="btn ghost" id="verRegistrosBtn">Ver registros</button>
+          <button class="btn warn" id="limpiarHoyBtn">Limpiar hoy</button>
+          <button class="btn danger" id="borrarTodoBtn">Borrar todo</button>
+        </div>
+
+        <div id="listaRegistros" class="list"></div>
+      </div>
+
+    </div>
+  </div>
+
   <script src="html5-qrcode.min.js"></script>
+  <script src="app.20260212-04.js"></script>
 
-  <!-- App JS versionado (evita mezcla) -->
-  <script src="app.20260212-03.js"></script>
-
-  <!-- Service Worker -->
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" })
@@ -38,9 +108,5 @@
         .catch(err => console.error("SW error", err));
     }
   </script>
-
 </body>
 </html>
-
-
-
