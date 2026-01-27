@@ -21,12 +21,11 @@
           <span class="badge" style="display:inline-block;">Datos: solo en este dispositivo</span>
         </div>
       </div>
-      <div class="badge">Versión: 2026-02-12-04</div>
+      <div class="badge">Versión: 2026-02-12-05</div>
     </header>
 
     <main class="grid">
 
-      <!-- Tarjeta: Escaneo + Formulario -->
       <section class="card" aria-label="Nuevo registro">
         <h2>Nuevo registro</h2>
         <p class="sub">Escanea un QR, clasifica el evento y guarda. (Funciona offline.)</p>
@@ -44,7 +43,6 @@
           Listo para escanear.
         </div>
 
-        <!-- Formulario de evento -->
         <div id="formEvento" style="display:none;">
           <div class="hr"></div>
 
@@ -95,7 +93,6 @@
         </div>
       </section>
 
-      <!-- Tarjeta: Historial -->
       <section class="card" aria-label="Historial local">
         <div class="row" style="justify-content:space-between; align-items:flex-end;">
           <div>
@@ -131,10 +128,10 @@
   </div>
 
   <script src="html5-qrcode.min.js"></script>
-  <script src="app.20260212-04.js"></script>
+  <script src="app.20260212-05.js"></script>
 
   <script>
-    // Indicador simple de conectividad (no afecta tu lógica)
+    // Indicador simple de conectividad
     (function () {
       const el = document.getElementById("netStatus");
       function paint() {
@@ -154,4 +151,3 @@
   </script>
 </body>
 </html>
-
