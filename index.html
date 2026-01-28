@@ -5,78 +5,90 @@
   <title>Registro QR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1220" />
-  <meta name="color-scheme" content="dark light" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- html5-qrcode -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js" defer></script>
+  <!-- APP -->
+  <script src="./app.20260212-05.js" defer></script>
 </head>
-
 <body>
-  <div class="container">
-
-    <header class="header">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">QR</div>
       <div>
-        <h1>Registro por QR</h1>
-        <div class="small" style="margin-top:6px;">
-          <span id="netStatus" class="badge" style="display:inline-block;">Estado: —</span>
-          <span class="badge" style="display:inline-block;">Datos: solo en este dispositivo</span>
-        </div>
+        <div class="title">Registro por QR (offline)</div>
+        <div class="subtitle">Asistencia • Llegadas tarde • Convivencia</div>
       </div>
-      <div class="badge">Versión: 2026-02-12-05</div>
-    </header>
+    </div>
+    <div class="badge">Versión: 2026-02-12-05</div>
+  </header>
 
-    <main class="grid">
+  <main class="container">
 
-      <section class="card" aria-label="Nuevo registro">
-        <h2>Nuevo registro</h2>
-        <p class="sub">Escanea un QR, clasifica el evento y guarda. (Funciona offline.)</p>
+    <section class="card">
+      <div class="card-title">1) Escanear</div>
+      <div class="row">
+        <button id="scanBtn" class="btn primary">📷 Escanear QR</button>
+        <button id="cancelScanBtn" class="btn ghost" style="display:none;">✖ Cancelar</button>
+      </div>
 
-        <div class="row">
-          <button type="button" class="btn primary" id="scanBtn">Escanear QR</button>
-          <button type="button" class="btn ghost" id="cancelScanBtn" style="display:none;">Cancelar escaneo</button>
+      <div id="qr-reader" class="qr-reader" style="display:none;"></div>
+
+      <div class="notice" id="notice">
+        <strong>Listo.</strong> Presiona <em>Escanear QR</em>.
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">2) Clasificar evento</div>
+
+      <div class="kv">
+        <div id="codigoActual" class="kv-item">Código: —</div>
+        <div id="horaActual" class="kv-item">Hora: —</div>
+      </div>
+
+      <div id="formEvento" class="form" style="display:none;">
+        <div class="field">
+          <label for="tipo">Tipo</label>
+          <select id="tipo">
+            <option value="INASISTENCIA">Inasistencia</option>
+            <option value="TARDE">Llegada tarde</option>
+            <option value="ASISTENCIA">Asistencia (marca)</option>
+            <option value="CONVIVENCIA">Convivencia (falta)</option>
+          </select>
         </div>
 
-        <div class="hr"></div>
-
-        <div id="qr-reader" style="display:none;" aria-label="Lector de QR"></div>
-
-        <div id="resultado" class="notice" role="status" aria-live="polite">
-          Listo para escanear.
+        <div class="field" id="wrapExcusa" style="display:none;">
+          <label for="excusa">Excusa</label>
+          <select id="excusa">
+            <option value="SIN_EXCUSA">Sin excusa</option>
+            <option value="CON_EXCUSA">Con excusa</option>
+          </select>
         </div>
 
-        <div id="formEvento" style="display:none;">
-          <div class="hr"></div>
-
-          <h2>Guardar evento</h2>
-
-          <div class="row" style="align-items:flex-start;">
-            <div class="badge" id="codigoActual">Código: —</div>
-            <div class="badge" id="horaActual">Hora: —</div>
-          </div>
-
-          <div class="field">
-            <label for="tipo">Tipo</label>
-            <select id="tipo">
-              <option value="INASISTENCIA">Inasistencia</option>
-              <option value="TARDE">Llegada tarde</option>
-              <option value="CONVIVENCIA">Convivencia</option>
-            </select>
-          </div>
-
-          <div class="field" id="wrapExcusa" style="display:none;">
-            <label for="excusa">Excusa</label>
-            <select id="excusa">
-              <option value="SIN_EXCUSA">Sin excusa</option>
-              <option value="CON_EXCUSA">Con excusa</option>
-            </select>
-          </div>
-
-          <div class="field" id="wrapNivel" style="display:none;">
-            <label for="nivel">Nivel</label>
+        <div class="field" id="wrapNivel" style="display:none;">
+            <label for="nivel">Clasificación (Tipo I / II / III)</label>
             <select id="nivel">
-              <option value="LEVE">Leve</option>
-              <option value="MODERADO">Moderado</option>
-              <option value="GRAVE">Grave</option>
+              <option value="TIPO_I">Tipo I</option>
+              <option value="TIPO_II">Tipo II</option>
+              <option value="TIPO_III">Tipo III</option>
             </select>
+          </div>
+
+          <div class="field" id="wrapObsTipo" style="display:none;">
+            <label for="obsTipo">Observación tipo (para llegadas tarde)</label>
+            <select id="obsTipo">
+              <option value="">— seleccionar —</option>
+              <option value="Estaba comprando en la tienda">Estaba comprando en la tienda</option>
+              <option value="No escuché el timbre">No escuché el timbre</option>
+              <option value="Se me olvidó">Se me olvidó</option>
+              <option value="Estaba con otro profesor">Estaba con otro profesor</option>
+              <option value="_OTRA">Otra (escribir abajo)</option>
+            </select>
+            <div class="small">Tip: si eliges una opción, se copiará a “Observación”.</div>
           </div>
 
           <div class="field">
@@ -84,69 +96,34 @@
             <textarea id="obs" placeholder="Ej: llegó 10 min tarde por transporte / llamado de atención por ruido..."></textarea>
           </div>
 
-          <div class="row" style="margin-top:10px;">
-            <button type="button" class="btn primary" id="guardarBtn">Guardar evento</button>
-            <button type="button" class="btn ghost" id="nuevoScanBtn">Escanear otro</button>
-          </div>
-
-          <p class="small">Tip: si solo quieres registrar inasistencias, deja “Inasistencia” y guarda.</p>
-        </div>
-      </section>
-
-      <section class="card" aria-label="Historial local">
-        <div class="row" style="justify-content:space-between; align-items:flex-end;">
-          <div>
-            <h2 style="margin-bottom:6px;">Registros</h2>
-            <p class="sub" style="margin:0;">Consulta y administración local (sin internet).</p>
-          </div>
-          <div class="badge" id="countBadge">Total: —</div>
-        </div>
-
-        <div class="hr"></div>
-
         <div class="row">
-          <button type="button" class="btn ghost" id="verRegistrosBtn">Ver registros</button>
-          <button type="button" class="btn warn" id="limpiarHoyBtn">Limpiar hoy</button>
-          <button type="button" class="btn danger" id="borrarTodoBtn">Borrar todo</button>
+          <button id="guardarBtn" class="btn ok">💾 Guardar</button>
+          <button id="limpiarBtn" class="btn warn">🧹 Limpiar todo</button>
+          <button id="exportarBtn" class="btn">⬇ Exportar CSV</button>
         </div>
-
-        <div id="listaRegistros" class="list" aria-live="polite"></div>
-
-        <p class="small" style="margin-top:10px;">
-          Sugerencia: usa “Limpiar hoy” al terminar la jornada para mantener el historial liviano.
-        </p>
-      </section>
-
-    </main>
-
-    <noscript>
-      <div class="card" style="margin-top:14px;">
-        Esta app requiere JavaScript para funcionar.
       </div>
-    </noscript>
+    </section>
 
-  </div>
+    <section class="card">
+      <div class="card-title">3) Historial</div>
+      <div class="row between">
+        <div class="muted">Total: <span id="totalReg">0</span></div>
+        <div class="muted">Se guarda localmente (offline)</div>
+      </div>
+      <div id="historial" class="historial"></div>
+    </section>
 
-  <script src="html5-qrcode.min.js"></script>
-  <script src="app.20260212-05.js"></script>
+  </main>
+
+  <footer class="footer">
+    <span class="muted">Funciona offline • Datos guardados en este dispositivo</span>
+  </footer>
 
   <script>
-    // Indicador simple de conectividad
-    (function () {
-      const el = document.getElementById("netStatus");
-      function paint() {
-        el.textContent = navigator.onLine ? "Estado: Online" : "Estado: Offline";
-      }
-      window.addEventListener("online", paint);
-      window.addEventListener("offline", paint);
-      paint();
-    })();
-
-    // Service Worker
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" })
-        .then(reg => reg.update())
-        .catch(err => console.error("SW error", err));
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
+      });
     }
   </script>
 </body>
