@@ -1,4 +1,3 @@
-// service-worker.js
 const BUILD = "20260212-06";
 const CACHE_NAME = `qr-registro-${BUILD}`;
 
@@ -7,10 +6,11 @@ const FILES_TO_CACHE = [
   "./index.html",
   "./style.css",
   "./manifest.json",
+  "./html5-qrcode.min.js",
   "./app.20260212-06.js"
 ];
 
-// Instalación: cachea lo esencial y activa de inmediato
+// Install: cache + activar inmediatamente
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -18,36 +18,54 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Activación: limpia caches viejos y toma control
+// Activate: claim + borrar caches viejos
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)))
-    ).then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter(k => k.startsWith("qr-registro-") && k !== CACHE_NAME)
+        .map(k => caches.delete(k))
+    );
+    await self.clients.claim();
+  })());
 });
 
-// Estrategia: navegación network-first (para traer cambios),
-// estáticos cache-first
+// Fetch:
+// - Navegación (HTML): Network First
+// - Estáticos: Cache First
 self.addEventListener("fetch", (event) => {
   const req = event.request;
+  const url = new URL(req.url);
 
-  // navegación (HTML): intenta red primero, fallback cache
+  // Solo mismo origen
+  if (url.origin !== self.location.origin) return;
+
+  // HTML principal
   if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", copy));
-          return res;
-        })
-        .catch(() => caches.match("./index.html"))
-    );
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req, { cache: "no-store" });
+        return fresh;
+      } catch {
+        return caches.match("./index.html");
+      }
+    })());
     return;
   }
 
-  // archivos estáticos: cache first
-  event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req))
-  );
+  // Estáticos
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+
+    try {
+      const fresh = await fetch(req);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(req, fresh.clone());
+      return fresh;
+    } catch {
+      return cached || Response.error();
+    }
+  })());
 });
