@@ -104,20 +104,25 @@
 
         <div class="row">
           <button id="guardarBtn" class="btn ok">💾 Guardar</button>
-          <button id="limpiarBtn" class="btn warn">🧹 Limpiar todo</button>
-          <button id="exportarBtn" class="btn">⬇ Exportar CSV</button>
         </div>
       </div>
     </section>
 
     <section class="card">
       <div class="card-title">3) Historial</div>
+
+      <div class="row">
+        <button id="exportarBtn" class="btn">⬇ Exportar CSV</button>
+        <button id="limpiarBtn" class="btn warn">🧹 Limpiar todo</button>
+      </div>
+
       <div class="row between">
         <div class="muted">Total: <span id="totalReg">0</span></div>
         <div class="muted">Se guarda localmente (offline)</div>
       </div>
+
       <div id="historial" class="historial"></div>
-    </section>
+</section>
 
   </main>
 
@@ -137,3 +142,4 @@
   </script>
 </body>
 </html>
+
