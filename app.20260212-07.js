@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Storage ---
   const KEY = "registros_qr_v1";
 
-  // Observaciones tipo (Llegada tarde) — por defecto + personalizadas
+  // Observaciones tipo (Llegada tarde)
   const KEY_OBS_TARDE = "obs_tipos_tarde_v1";
   const OBS_TARDE_DEFAULT = [
     "Estaba comprando en la tienda",
@@ -101,17 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function safeParseJSON(raw, fallback) {
-    try {
-      const v = JSON.parse(raw);
-      return v ?? fallback;
-    } catch {
-      return fallback;
-    }
+    try { return JSON.parse(raw) ?? fallback; } catch { return fallback; }
   }
 
-  function norm(s) {
-    return String(s || "").trim().toLowerCase();
-  }
+  function norm(s) { return String(s || "").trim().toLowerCase(); }
 
   function uniq(list) {
     const out = [];
@@ -156,13 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
         timestamp: r.timestamp || "",
         tipo: r.tipo || "INASISTENCIA",
         excusa: r.excusa ?? null,
-        nivel: (function () {
-          const n = r.nivel || null;
-          if (n === "LEVE") return "TIPO_I";
-          if (n === "MODERADO") return "TIPO_II";
-          if (n === "GRAVE") return "TIPO_III";
-          return n;
-        })(),
+        nivel: r.nivel || null,
         falta: r.falta || "",
         obs: r.obs || "",
       }));
@@ -211,9 +198,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (n === "TIPO_I") return "Tipo I";
     if (n === "TIPO_II") return "Tipo II";
     if (n === "TIPO_III") return "Tipo III";
-    if (n === "LEVE") return "Tipo I";
-    if (n === "MODERADO") return "Tipo II";
-    if (n === "GRAVE") return "Tipo III";
     return n || "";
   }
 
@@ -240,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .join(",");
   }
 
-  // --- Dynamic options (ObsTipo / Faltas) ---
+  // --- Dynamic options ---
   let obsTardeList = loadList(KEY_OBS_TARDE, OBS_TARDE_DEFAULT);
 
   function refreshObsTipoOptions() {
@@ -267,11 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
     optOther.textContent = "Otra (escribir abajo)";
     obsTipo.appendChild(optOther);
 
-    if ([...obsTipo.options].some(o => o.value === current)) {
-      obsTipo.value = current;
-    } else {
-      obsTipo.value = "";
-    }
+    obsTipo.value = [...obsTipo.options].some(o => o.value === current) ? current : "";
   }
 
   function faltasKeyByNivel(n) {
@@ -314,12 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
     optOther.textContent = "Otra (guardar nueva)";
     falta.appendChild(optOther);
 
-    if ([...falta.options].some(o => o.value === current)) {
-      falta.value = current;
-    } else {
-      falta.value = "";
-    }
-
+    falta.value = [...falta.options].some(o => o.value === current) ? current : "";
     refreshFaltaOtraUI();
   }
 
@@ -330,15 +305,61 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!show) faltaOtra.value = "";
   }
 
-  // --- Scan ---
+  // --- Form behavior ---
+  function updateFormByTipo() {
+    const t = tipo.value;
+
+    wrapExcusa.style.display = (t === "INASISTENCIA" || t === "TARDE") ? "grid" : "none";
+
+    const isConvivencia = (t === "CONVIVENCIA");
+    wrapNivel.style.display = isConvivencia ? "grid" : "none";
+    wrapFalta.style.display = isConvivencia ? "grid" : "none";
+    if (isConvivencia) refreshFaltaOptions();
+    else wrapFaltaOtra.style.display = "none";
+
+    wrapObsTipo.style.display = (t === "TARDE") ? "grid" : "none";
+  }
+
+  tipo?.addEventListener("change", updateFormByTipo);
+  nivel?.addEventListener("change", refreshFaltaOptions);
+  falta?.addEventListener("change", () => {
+    refreshFaltaOtraUI();
+    if (falta.value === "_OTRA") faltaOtra?.focus();
+  });
+
+  obsTipo?.addEventListener("change", () => {
+    const v = obsTipo.value;
+    if (!v) return;
+    if (v === "_OTRA") { obs.focus(); return; }
+    obs.value = v;
+  });
+
+  // --- Descarta lectura (nuevo, confiable) ---
+  function descartarLectura() {
+    pending = null;
+
+    formEvento.style.display = "none";
+    codigoActual.textContent = "Código: —";
+    horaActual.textContent = "Hora: —";
+
+    // Ocultar el botón hasta que haya un QR leído de nuevo
+    if (descartarBtn) descartarBtn.style.display = "none";
+
+    // Reset básico (por seguridad)
+    tipo.value = "INASISTENCIA";
+    if (excusa) excusa.value = "SIN_EXCUSA";
+    if (nivel) nivel.value = "TIPO_I";
+    if (falta) falta.value = "";
+    if (faltaOtra) faltaOtra.value = "";
+    if (obsTipo) obsTipo.value = "";
+    if (obs) obs.value = "";
+
+    updateFormByTipo();
+    setNotice(`<strong>Listo.</strong> Presiona <em>Escanear QR</em>.`);
+  }
+
+  // --- Scan (NO tocamos lo que ya funciona) ---
   async function startScan() {
     formEvento.style.display = "none";
     qrReader.style.display = "block";
-    cancelScanBtn.style.display = "inline-block";
-    setNotice(`<strong>Escaneando...</strong><br><span class="small">Apunta la cámara al código QR.</span>`);
-
-    if (!qrScanner) qrScanner = new Html5Qrcode("qr-reader");
-
-    try {
-      await qrScanner.start(
-        { facingMode: "e
+    cancelScanBtn.style.disp
