@@ -46,9 +46,15 @@
     <section class="card">
       <div class="card-title">2) Clasificar evento</div>
 
-      <div class="kv">
+      <!-- Aquí es donde debe quedar Cambiar estudiante (pegado a los datos) -->
+      <div class="row">
         <div id="codigoActual" class="kv-item">Código: —</div>
         <div id="horaActual" class="kv-item">Hora: —</div>
+
+        <!-- Solo aparece cuando hay QR leído -->
+        <button id="descartarBtn" class="btn ghost" type="button" style="display:none;">
+          ↩ Cambiar estudiante
+        </button>
       </div>
 
       <div id="formEvento" class="form" style="display:none;">
@@ -105,10 +111,9 @@
           <textarea id="obs" placeholder="Ej: llegó 10 min tarde por transporte / llamado de atención por ruido..."></textarea>
         </div>
 
-        <!-- SOLO Guardar + Cambiar estudiante -->
+        <!-- En Clasificar: SOLO Guardar -->
         <div class="row">
-          <button id="guardarBtn" class="btn ok">💾 Guardar</button>
-          <button id="descartarBtn" class="btn ghost">↩ Cambiar estudiante</button>
+          <button id="guardarBtn" class="btn ok" type="button">💾 Guardar</button>
         </div>
       </div>
     </section>
@@ -116,10 +121,9 @@
     <section class="card">
       <div class="card-title">3) Historial</div>
 
-      <!-- Botones administrativos aquí -->
       <div class="row">
-        <button id="exportarBtn" class="btn">⬇ Exportar CSV</button>
-        <button id="limpiarBtn" class="btn warn">🧹 Limpiar todo</button>
+        <button id="exportarBtn" class="btn" type="button">⬇ Exportar CSV</button>
+        <button id="limpiarBtn" class="btn warn" type="button">🧹 Limpiar todo</button>
       </div>
 
       <div class="row between">
