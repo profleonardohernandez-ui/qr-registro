@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const scanBtn = document.getElementById("scanBtn");
   const cancelScanBtn = document.getElementById("cancelScanBtn");
   const guardarBtn = document.getElementById("guardarBtn");
+
+  const syncBtn = document.getElementById("syncBtn"); // NUEVO
   const limpiarBtn = document.getElementById("limpiarBtn");
   const exportarBtn = document.getElementById("exportarBtn");
 
@@ -38,6 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Storage ---
   const KEY = "registros_qr_v1";
+
+  // === Google Sheets Sync ===
+  const SHEETS_WEBAPP_URL =
+    "https://script.google.com/macros/s/AKfycbzbbTA4VFxI8hv2qNqZWaBgMOwrc22lmf1-MSv7Y5uf_gey96Fxbz_HJC2vP-7TO6s/exec";
+  const KEY_DEVICE_ID = "qr_device_id_v1";
 
   // Observaciones tipo (Llegada tarde) — por defecto + personalizadas
   const KEY_OBS_TARDE = "obs_tipos_tarde_v1";
@@ -164,6 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })(),
         falta: r.falta || "",
         obs: r.obs || "",
+        syncedAt: r.syncedAt || "", // NUEVO
       }));
     } catch {
       return [];
@@ -266,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
     optOther.textContent = "Otra (escribir abajo)";
     obsTipo.appendChild(optOther);
 
-    if ([...obsTipo.options].some(o => o.value === current)) {
+    if ([...obsTipo.options].some((o) => o.value === current)) {
       obsTipo.value = current;
     } else {
       obsTipo.value = "";
@@ -313,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
     optOther.textContent = "Otra (guardar nueva)";
     falta.appendChild(optOther);
 
-    if ([...falta.options].some(o => o.value === current)) {
+    if ([...falta.options].some((o) => o.value === current)) {
       falta.value = current;
     } else {
       falta.value = "";
@@ -324,9 +332,123 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function refreshFaltaOtraUI() {
     if (!wrapFaltaOtra || !faltaOtra) return;
-    const show = (falta?.value === "_OTRA");
+    const show = falta?.value === "_OTRA";
     wrapFaltaOtra.style.display = show ? "grid" : "none";
     if (!show) faltaOtra.value = "";
+  }
+
+  // === Google Sheets Sync helpers ===
+  function getDeviceId() {
+    let id = localStorage.getItem(KEY_DEVICE_ID);
+    if (id) return id;
+
+    const rnd = () => Math.floor(Math.random() * 1e9).toString(36);
+    id = `DEV-${rnd()}-${rnd()}-${Date.now().toString(36)}`;
+    localStorage.setItem(KEY_DEVICE_ID, id);
+    return id;
+  }
+
+  function makeUid(r) {
+    return `${r.timestamp || ""}__${r.codigo || ""}__${r.tipo || ""}`;
+  }
+
+  async function syncToGoogleSheets() {
+    if (!navigator.onLine) {
+      setNotice(
+        `<strong>Sin internet.</strong><br><span class="small">Conéctate y vuelve a intentar.</span>`
+      );
+      return;
+    }
+
+    const all = getRegistros();
+    const pendingSync = all.filter((r) => !r.syncedAt);
+
+    if (!pendingSync.length) {
+      setNotice(
+        `<strong>Ya está todo sincronizado.</strong><br><span class="small">No hay registros pendientes.</span>`
+      );
+      return;
+    }
+
+    const exportedAt = new Date().toISOString();
+    const deviceId = getDeviceId();
+
+    const records = pendingSync.map((r) => ({
+      uid: makeUid(r),
+      timestamp: r.timestamp || "",
+      fechaISO: r.fechaISO || "",
+      fecha: r.fecha || "",
+      hora: r.hora || "",
+      codigo: r.codigo || "",
+      tipo: r.tipo || "",
+      excusa: r.excusa || "",
+      nivel: r.nivel || "",
+      falta: r.falta || "",
+      obs: r.obs || "",
+    }));
+
+    // UI lock
+    if (syncBtn) {
+      syncBtn.disabled = true;
+      syncBtn.textContent = "☁️ Sincronizando...";
+    }
+    setNotice(
+      `<strong>Sincronizando...</strong><br><span class="small">Pendientes: ${pendingSync.length}</span>`
+    );
+
+    try {
+      const res = await fetch(SHEETS_WEBAPP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ deviceId, exportedAt, records }),
+      });
+
+      // Intentar leer respuesta (si el navegador permite CORS)
+      const txt = await res.text();
+      let out = null;
+      try {
+        out = JSON.parse(txt);
+      } catch {
+        out = null;
+      }
+
+      if (!out || out.ok !== true) {
+        // Nota: a veces el envío sí llega pero el navegador bloquea leer respuesta.
+        throw new Error(out && out.error ? out.error : "No se pudo confirmar respuesta de Google");
+      }
+
+      // Marcar como sincronizados SOLO si confirmamos OK
+      const syncedAt = new Date().toISOString();
+      const uids = new Set(records.map((x) => x.uid));
+
+      const updated = all.map((r) => {
+        const uid = makeUid(r);
+        if (!r.syncedAt && uids.has(uid)) return { ...r, syncedAt };
+        return r;
+      });
+
+      setRegistros(updated);
+      renderRegistros();
+
+      setNotice(
+        `<strong>Sincronización completa.</strong><br>` +
+          `<span class="small">Enviados: ${out.received} • Nuevos: ${out.appended} • Duplicados: ${out.duplicates}</span>`
+      );
+    } catch (err) {
+      // No marcamos syncedAt si no pudimos confirmar.
+      setNotice(
+        `<strong>Envío realizado, pero NO se pudo confirmar.</strong><br>` +
+          `<span class="small">${escapeHtml(
+            String(err && err.message ? err.message : err)
+          )}</span><br>` +
+          `<span class="small">Abre el Sheet y verifica si llegaron filas. Puedes reintentar: no se duplicará (usa UID).</span>`
+      );
+    } finally {
+      if (syncBtn) {
+        syncBtn.disabled = false;
+        syncBtn.textContent = "☁️ Sincronizar a Google Sheets";
+      }
+    }
   }
 
   // --- Scan ---
@@ -334,7 +456,9 @@ document.addEventListener("DOMContentLoaded", () => {
     formEvento.style.display = "none";
     qrReader.style.display = "block";
     cancelScanBtn.style.display = "inline-block";
-    setNotice(`<strong>Escaneando...</strong><br><span class="small">Apunta la cámara al código QR.</span>`);
+    setNotice(
+      `<strong>Escaneando...</strong><br><span class="small">Apunta la cámara al código QR.</span>`
+    );
 
     if (!qrScanner) qrScanner = new Html5Qrcode("qr-reader");
 
@@ -343,7 +467,9 @@ document.addEventListener("DOMContentLoaded", () => {
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         async (codigoQR) => {
-          try { await qrScanner.stop(); } catch {}
+          try {
+            await qrScanner.stop();
+          } catch {}
           qrReader.style.display = "none";
           cancelScanBtn.style.display = "none";
 
@@ -358,7 +484,8 @@ document.addEventListener("DOMContentLoaded", () => {
             excusa: null,
             nivel: null,
             falta: "",
-            obs: ""
+            obs: "",
+            syncedAt: "", // NUEVO
           };
 
           codigoActual.textContent = `Código: ${codigoQR}`;
@@ -376,32 +503,42 @@ document.addEventListener("DOMContentLoaded", () => {
           refreshFaltaOptions();
           updateFormByTipo();
 
-          setNotice(`<strong>QR leído:</strong> ${escapeHtml(codigoQR)}<br><span class="small">Clasifica y guarda.</span>`);
+          setNotice(
+            `<strong>QR leído:</strong> ${escapeHtml(
+              codigoQR
+            )}<br><span class="small">Clasifica y guarda.</span>`
+          );
           formEvento.style.display = "block";
         }
       );
     } catch {
       qrReader.style.display = "none";
       cancelScanBtn.style.display = "none";
-      setNotice(`<strong>No se pudo iniciar la cámara.</strong><br><span class="small">Revisa permisos del navegador.</span>`);
+      setNotice(
+        `<strong>No se pudo iniciar la cámara.</strong><br><span class="small">Revisa permisos del navegador.</span>`
+      );
     }
   }
 
   async function cancelScan() {
-    try { await qrScanner?.stop(); } catch {}
+    try {
+      await qrScanner?.stop();
+    } catch {}
     qrReader.style.display = "none";
     cancelScanBtn.style.display = "none";
-    setNotice(`<strong>Escaneo cancelado.</strong> Presiona <em>Escanear QR</em> para intentarlo de nuevo.`);
+    setNotice(
+      `<strong>Escaneo cancelado.</strong> Presiona <em>Escanear QR</em> para intentarlo de nuevo.`
+    );
   }
 
   // --- Form behavior ---
   function updateFormByTipo() {
     const t = tipo.value;
 
-    const needsExcusa = (t === "INASISTENCIA" || t === "TARDE");
+    const needsExcusa = t === "INASISTENCIA" || t === "TARDE";
     wrapExcusa.style.display = needsExcusa ? "grid" : "none";
 
-    const isConvivencia = (t === "CONVIVENCIA");
+    const isConvivencia = t === "CONVIVENCIA";
     wrapNivel.style.display = isConvivencia ? "grid" : "none";
     wrapFalta.style.display = isConvivencia ? "grid" : "none";
     if (isConvivencia) {
@@ -410,7 +547,7 @@ document.addEventListener("DOMContentLoaded", () => {
       wrapFaltaOtra.style.display = "none";
     }
 
-    wrapObsTipo.style.display = (t === "TARDE") ? "grid" : "none";
+    wrapObsTipo.style.display = t === "TARDE" ? "grid" : "none";
   }
 
   tipo?.addEventListener("change", updateFormByTipo);
@@ -458,28 +595,24 @@ document.addEventListener("DOMContentLoaded", () => {
           refreshObsTipoOptions();
         }
       }
-
     } else if (pending.tipo === "CONVIVENCIA") {
       pending.nivel = nivel.value;
       pending.excusa = null;
 
-      // falta: del desplegable o “Otra”
       if (falta.value === "_OTRA") {
         const nuevaFalta = (faltaOtra?.value || "").trim();
         pending.falta = nuevaFalta;
 
-        // Guardar nueva falta para ese nivel
         if (nuevaFalta) {
           const n = pending.nivel || "TIPO_I";
           const k = faltasKeyByNivel(n);
-          const updated = pushUniqueAndSave(k, (faltasList[n] || []), nuevaFalta);
+          const updated = pushUniqueAndSave(k, faltasList[n] || [], nuevaFalta);
           faltasList[n] = updated;
           refreshFaltaOptions();
         }
       } else {
         pending.falta = falta.value || "";
       }
-
     } else {
       pending.excusa = null;
       pending.nivel = null;
@@ -506,7 +639,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "excusa",
       "clasificacion",
       "falta",
-      "observacion"
+      "observacion",
+      "syncedAt",
     ];
     const rows = [toCSVRow(header)];
     for (const r of arr.slice().reverse()) {
@@ -521,7 +655,8 @@ document.addEventListener("DOMContentLoaded", () => {
           r.excusa || "",
           r.nivel || "",
           r.falta || "",
-          r.obs || ""
+          r.obs || "",
+          r.syncedAt || "",
         ])
       );
     }
@@ -542,10 +677,16 @@ document.addEventListener("DOMContentLoaded", () => {
       .slice(0, 200)
       .map((r) => {
         const chips = [];
-        chips.push(`<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`);
+        chips.push(
+          `<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`
+        );
 
         if ((r.tipo === "INASISTENCIA" || r.tipo === "TARDE") && r.excusa) {
-          chips.push(`<span class="chip">${r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"}</span>`);
+          chips.push(
+            `<span class="chip">${
+              r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"
+            }</span>`
+          );
         }
 
         if (r.tipo === "CONVIVENCIA" && r.nivel) {
@@ -554,6 +695,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (r.tipo === "CONVIVENCIA" && r.falta) {
           chips.push(`<span class="chip">${escapeHtml(r.falta)}</span>`);
+        }
+
+        if (r.syncedAt) {
+          chips.push(`<span class="chip">☁️ Sync</span>`);
         }
 
         const obsHtml = r.obs ? `<div class="obs">${escapeHtml(r.obs)}</div>` : "";
@@ -578,6 +723,8 @@ document.addEventListener("DOMContentLoaded", () => {
   scanBtn?.addEventListener("click", startScan);
   cancelScanBtn?.addEventListener("click", cancelScan);
   guardarBtn?.addEventListener("click", guardarEvento);
+
+  syncBtn?.addEventListener("click", syncToGoogleSheets); // NUEVO
 
   limpiarBtn?.addEventListener("click", () => {
     if (confirm("¿Seguro que deseas borrar todos los registros guardados en este dispositivo?")) {
