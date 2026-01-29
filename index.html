@@ -9,19 +9,19 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./style.css" />
 
-  <!-- html5-qrcode (LOCAL, offline robusto) -->
-  <script src="./html5-qrcode.min.js"></script>
+  <!-- html5-qrcode (LOCAL, para offline) -->
+  <script src="./html5-qrcode.min.js" defer></script>
+
   <!-- APP -->
   <script src="./app.20260212-07.js" defer></script>
 </head>
-
 <body>
   <header class="topbar">
     <div class="brand">
       <div class="logo">QR</div>
       <div>
         <div class="title">Registro por QR (offline)</div>
-        <div class="subtitle">Inasistencias • Llegadas tarde • Convivencia</div>
+        <div class="subtitle">Inasistencia • Llegadas tarde • Convivencia</div>
       </div>
     </div>
     <div class="badge">Versión: 2026-02-12-07</div>
@@ -32,8 +32,8 @@
     <section class="card">
       <div class="card-title">1) Escanear</div>
       <div class="row">
-        <button id="scanBtn" class="btn primary">📷 Escanear QR</button>
-        <button id="cancelScanBtn" class="btn ghost" style="display:none;">✖ Cancelar</button>
+        <button id="scanBtn" class="btn primary" type="button">📷 Escanear QR</button>
+        <button id="cancelScanBtn" class="btn ghost" type="button" style="display:none;">✖ Cancelar</button>
       </div>
 
       <div id="qr-reader" class="qr-reader" style="display:none;"></div>
@@ -78,26 +78,27 @@
           </select>
         </div>
 
-        <!-- Falta específica (solo Convivencia) -->
         <div class="field" id="wrapFalta" style="display:none;">
           <label for="falta">Falta específica (según Manual)</label>
-          <select id="falta"></select>
-          <div class="small">Tip: si eliges “Otra”, puedes guardarla para usarla de nuevo.</div>
+          <select id="falta">
+            <option value="">— seleccionar —</option>
+            <option value="_OTRA">Otra (guardar nueva)</option>
+          </select>
+          <div class="small">Tip: puedes guardar una falta nueva y quedará disponible para ese tipo.</div>
         </div>
 
-        <!-- Texto para “Otra” (solo Convivencia cuando aplique) -->
         <div class="field" id="wrapFaltaOtra" style="display:none;">
-          <label for="faltaOtra">Si elegiste “Otra”, escribe aquí</label>
-          <input id="faltaOtra" placeholder="Ej: Uso indebido de herramienta en huerta (sin autorización)" />
+          <label for="faltaOtra">Escribe la falta (se guardará en la lista)</label>
+          <input id="faltaOtra" type="text" placeholder="Ej: I.16 — ..." />
         </div>
 
         <div class="field" id="wrapObsTipo" style="display:none;">
           <label for="obsTipo">Observación tipo (para llegadas tarde)</label>
-          <select id="obsTipo"></select>
-          <div class="small">
-            Tip: si eliges una opción, se copiará a “Observación”.
-            Si eliges “Otra” y escribes, quedará guardada.
-          </div>
+          <select id="obsTipo">
+            <option value="">— seleccionar —</option>
+            <option value="_OTRA">Otra (escribir abajo)</option>
+          </select>
+          <div class="small">Tip: si eliges una opción, se copiará a “Observación”.</div>
         </div>
 
         <div class="field">
@@ -105,7 +106,6 @@
           <textarea id="obs" placeholder="Ej: llegó 10 min tarde por transporte / llamado de atención por ruido..."></textarea>
         </div>
 
-        <!-- En Clasificar: SOLO Guardar -->
         <div class="row">
           <button id="guardarBtn" class="btn ok" type="button">💾 Guardar</button>
         </div>
@@ -114,20 +114,18 @@
 
     <section class="card">
       <div class="card-title">3) Historial</div>
-
-      <!-- Botones administrativos aquí -->
-      <div class="row">
-         <button id="syncBtn" class="btn primary" type="button">☁️ Sincronizar a Google Sheets</button>
-         <button id="exportarBtn" class="btn" type="button">⬇ Exportar CSV</button>
-         <button id="limpiarBtn" class="btn warn" type="button">🧹 Limpiar todo</button>
-      </div>
-
       <div class="row between">
         <div class="muted">Total: <span id="totalReg">0</span></div>
         <div class="muted">Se guarda localmente (offline)</div>
       </div>
 
-      <div id="historial" class="historial"></div>
+      <div class="row" style="margin-top:10px;">
+        <button id="syncBtn" class="btn primary" type="button">☁️ Sincronizar a Google Sheets</button>
+        <button id="exportarBtn" class="btn" type="button">⬇ Exportar CSV</button>
+        <button id="limpiarBtn" class="btn warn" type="button">🧹 Limpiar todo</button>
+      </div>
+
+      <div id="historial" class="historial" style="margin-top:12px;"></div>
     </section>
 
   </main>
@@ -139,13 +137,9 @@
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("./service-worker.js", { updateViaCache: "none" })
-          .then(reg => reg.update())
-          .catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
       });
     }
   </script>
 </body>
 </html>
-
