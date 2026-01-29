@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const scanBtn = document.getElementById("scanBtn");
   const cancelScanBtn = document.getElementById("cancelScanBtn");
   const guardarBtn = document.getElementById("guardarBtn");
-  const descartarBtn = document.getElementById("descartarBtn");
   const limpiarBtn = document.getElementById("limpiarBtn");
   const exportarBtn = document.getElementById("exportarBtn");
 
@@ -40,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Storage ---
   const KEY = "registros_qr_v1";
 
-  // Observaciones tipo (Llegada tarde)
+  // Observaciones tipo (Llegada tarde) — por defecto + personalizadas
   const KEY_OBS_TARDE = "obs_tipos_tarde_v1";
   const OBS_TARDE_DEFAULT = [
     "Estaba comprando en la tienda",
@@ -101,10 +100,17 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function safeParseJSON(raw, fallback) {
-    try { return JSON.parse(raw) ?? fallback; } catch { return fallback; }
+    try {
+      const v = JSON.parse(raw);
+      return v ?? fallback;
+    } catch {
+      return fallback;
+    }
   }
 
-  function norm(s) { return String(s || "").trim().toLowerCase(); }
+  function norm(s) {
+    return String(s || "").trim().toLowerCase();
+  }
 
   function uniq(list) {
     const out = [];
@@ -149,7 +155,13 @@ document.addEventListener("DOMContentLoaded", () => {
         timestamp: r.timestamp || "",
         tipo: r.tipo || "INASISTENCIA",
         excusa: r.excusa ?? null,
-        nivel: r.nivel || null,
+        nivel: (function () {
+          const n = r.nivel || null;
+          if (n === "LEVE") return "TIPO_I";
+          if (n === "MODERADO") return "TIPO_II";
+          if (n === "GRAVE") return "TIPO_III";
+          return n;
+        })(),
         falta: r.falta || "",
         obs: r.obs || "",
       }));
@@ -198,6 +210,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (n === "TIPO_I") return "Tipo I";
     if (n === "TIPO_II") return "Tipo II";
     if (n === "TIPO_III") return "Tipo III";
+    if (n === "LEVE") return "Tipo I";
+    if (n === "MODERADO") return "Tipo II";
+    if (n === "GRAVE") return "Tipo III";
     return n || "";
   }
 
@@ -224,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .join(",");
   }
 
-  // --- Dynamic options ---
+  // --- Dynamic options (ObsTipo / Faltas) ---
   let obsTardeList = loadList(KEY_OBS_TARDE, OBS_TARDE_DEFAULT);
 
   function refreshObsTipoOptions() {
@@ -251,7 +266,11 @@ document.addEventListener("DOMContentLoaded", () => {
     optOther.textContent = "Otra (escribir abajo)";
     obsTipo.appendChild(optOther);
 
-    obsTipo.value = [...obsTipo.options].some(o => o.value === current) ? current : "";
+    if ([...obsTipo.options].some(o => o.value === current)) {
+      obsTipo.value = current;
+    } else {
+      obsTipo.value = "";
+    }
   }
 
   function faltasKeyByNivel(n) {
@@ -294,7 +313,12 @@ document.addEventListener("DOMContentLoaded", () => {
     optOther.textContent = "Otra (guardar nueva)";
     falta.appendChild(optOther);
 
-    falta.value = [...falta.options].some(o => o.value === current) ? current : "";
+    if ([...falta.options].some(o => o.value === current)) {
+      falta.value = current;
+    } else {
+      falta.value = "";
+    }
+
     refreshFaltaOtraUI();
   }
 
@@ -305,61 +329,268 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!show) faltaOtra.value = "";
   }
 
+  // --- Scan ---
+  async function startScan() {
+    formEvento.style.display = "none";
+    qrReader.style.display = "block";
+    cancelScanBtn.style.display = "inline-block";
+    setNotice(`<strong>Escaneando...</strong><br><span class="small">Apunta la cámara al código QR.</span>`);
+
+    if (!qrScanner) qrScanner = new Html5Qrcode("qr-reader");
+
+    try {
+      await qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        async (codigoQR) => {
+          try { await qrScanner.stop(); } catch {}
+          qrReader.style.display = "none";
+          cancelScanBtn.style.display = "none";
+
+          const a = new Date();
+          pending = {
+            codigo: codigoQR,
+            fecha: a.toLocaleDateString(),
+            hora: a.toLocaleTimeString(),
+            fechaISO: a.toISOString().slice(0, 10),
+            timestamp: a.toISOString(),
+            tipo: "INASISTENCIA",
+            excusa: null,
+            nivel: null,
+            falta: "",
+            obs: ""
+          };
+
+          codigoActual.textContent = `Código: ${codigoQR}`;
+          horaActual.textContent = `Hora: ${pending.fecha} • ${pending.hora}`;
+
+          tipo.value = "INASISTENCIA";
+          if (excusa) excusa.value = "SIN_EXCUSA";
+          if (nivel) nivel.value = "TIPO_I";
+          if (falta) falta.value = "";
+          if (faltaOtra) faltaOtra.value = "";
+          if (obsTipo) obsTipo.value = "";
+          if (obs) obs.value = "";
+
+          refreshObsTipoOptions();
+          refreshFaltaOptions();
+          updateFormByTipo();
+
+          setNotice(`<strong>QR leído:</strong> ${escapeHtml(codigoQR)}<br><span class="small">Clasifica y guarda.</span>`);
+          formEvento.style.display = "block";
+        }
+      );
+    } catch {
+      qrReader.style.display = "none";
+      cancelScanBtn.style.display = "none";
+      setNotice(`<strong>No se pudo iniciar la cámara.</strong><br><span class="small">Revisa permisos del navegador.</span>`);
+    }
+  }
+
+  async function cancelScan() {
+    try { await qrScanner?.stop(); } catch {}
+    qrReader.style.display = "none";
+    cancelScanBtn.style.display = "none";
+    setNotice(`<strong>Escaneo cancelado.</strong> Presiona <em>Escanear QR</em> para intentarlo de nuevo.`);
+  }
+
   // --- Form behavior ---
   function updateFormByTipo() {
     const t = tipo.value;
 
-    wrapExcusa.style.display = (t === "INASISTENCIA" || t === "TARDE") ? "grid" : "none";
+    const needsExcusa = (t === "INASISTENCIA" || t === "TARDE");
+    wrapExcusa.style.display = needsExcusa ? "grid" : "none";
 
     const isConvivencia = (t === "CONVIVENCIA");
     wrapNivel.style.display = isConvivencia ? "grid" : "none";
     wrapFalta.style.display = isConvivencia ? "grid" : "none";
-    if (isConvivencia) refreshFaltaOptions();
-    else wrapFaltaOtra.style.display = "none";
+    if (isConvivencia) {
+      refreshFaltaOptions();
+    } else {
+      wrapFaltaOtra.style.display = "none";
+    }
 
     wrapObsTipo.style.display = (t === "TARDE") ? "grid" : "none";
   }
 
   tipo?.addEventListener("change", updateFormByTipo);
-  nivel?.addEventListener("change", refreshFaltaOptions);
+
+  nivel?.addEventListener("change", () => {
+    refreshFaltaOptions();
+  });
+
   falta?.addEventListener("change", () => {
     refreshFaltaOtraUI();
-    if (falta.value === "_OTRA") faltaOtra?.focus();
+    if (falta.value === "_OTRA") {
+      faltaOtra?.focus();
+    }
   });
 
   obsTipo?.addEventListener("change", () => {
     const v = obsTipo.value;
     if (!v) return;
-    if (v === "_OTRA") { obs.focus(); return; }
+    if (v === "_OTRA") {
+      obs.focus();
+      return;
+    }
     obs.value = v;
   });
 
-  // --- Descarta lectura (nuevo, confiable) ---
-  function descartarLectura() {
-    pending = null;
+  function guardarEvento() {
+    if (!pending) {
+      setNotice(`<strong>Primero escanea un QR.</strong>`);
+      return;
+    }
 
+    pending.tipo = tipo.value;
+    pending.obs = obs.value.trim();
+
+    if (pending.tipo === "INASISTENCIA" || pending.tipo === "TARDE") {
+      pending.excusa = excusa.value;
+      pending.nivel = null;
+      pending.falta = "";
+
+      // Persistir “Observación tipo” cuando el usuario eligió “Otra”
+      if (pending.tipo === "TARDE" && obsTipo?.value === "_OTRA") {
+        const nueva = (obs.value || "").trim();
+        if (nueva) {
+          obsTardeList = pushUniqueAndSave(KEY_OBS_TARDE, obsTardeList, nueva);
+          refreshObsTipoOptions();
+        }
+      }
+
+    } else if (pending.tipo === "CONVIVENCIA") {
+      pending.nivel = nivel.value;
+      pending.excusa = null;
+
+      // falta: del desplegable o “Otra”
+      if (falta.value === "_OTRA") {
+        const nuevaFalta = (faltaOtra?.value || "").trim();
+        pending.falta = nuevaFalta;
+
+        // Guardar nueva falta para ese nivel
+        if (nuevaFalta) {
+          const n = pending.nivel || "TIPO_I";
+          const k = faltasKeyByNivel(n);
+          const updated = pushUniqueAndSave(k, (faltasList[n] || []), nuevaFalta);
+          faltasList[n] = updated;
+          refreshFaltaOptions();
+        }
+      } else {
+        pending.falta = falta.value || "";
+      }
+
+    } else {
+      pending.excusa = null;
+      pending.nivel = null;
+      pending.falta = "";
+    }
+
+    addRegistro(pending);
+    setNotice(`<strong>Guardado.</strong> Puedes escanear el siguiente QR.`);
+    pending = null;
     formEvento.style.display = "none";
     codigoActual.textContent = "Código: —";
     horaActual.textContent = "Hora: —";
-
-    // Ocultar el botón hasta que haya un QR leído de nuevo
-    if (descartarBtn) descartarBtn.style.display = "none";
-
-    // Reset básico (por seguridad)
-    tipo.value = "INASISTENCIA";
-    if (excusa) excusa.value = "SIN_EXCUSA";
-    if (nivel) nivel.value = "TIPO_I";
-    if (falta) falta.value = "";
-    if (faltaOtra) faltaOtra.value = "";
-    if (obsTipo) obsTipo.value = "";
-    if (obs) obs.value = "";
-
-    updateFormByTipo();
-    setNotice(`<strong>Listo.</strong> Presiona <em>Escanear QR</em>.`);
   }
 
-  // --- Scan (NO tocamos lo que ya funciona) ---
-  async function startScan() {
-    formEvento.style.display = "none";
-    qrReader.style.display = "block";
-    cancelScanBtn.style.disp
+  function exportarCSV() {
+    const arr = getRegistros();
+    const header = [
+      "timestamp",
+      "fechaISO",
+      "fecha",
+      "hora",
+      "codigo",
+      "tipo",
+      "excusa",
+      "clasificacion",
+      "falta",
+      "observacion"
+    ];
+    const rows = [toCSVRow(header)];
+    for (const r of arr.slice().reverse()) {
+      rows.push(
+        toCSVRow([
+          r.timestamp,
+          r.fechaISO,
+          r.fecha,
+          r.hora,
+          r.codigo,
+          r.tipo,
+          r.excusa || "",
+          r.nivel || "",
+          r.falta || "",
+          r.obs || ""
+        ])
+      );
+    }
+    const now = new Date().toISOString().slice(0, 10);
+    downloadText(`registros_qr_${now}.csv`, rows.join("\n"));
+  }
+
+  function renderRegistros() {
+    const arr = getRegistros();
+    totalReg.textContent = String(arr.length);
+
+    if (!arr.length) {
+      historial.innerHTML = `<div class="empty">Aún no hay registros.</div>`;
+      return;
+    }
+
+    const html = arr
+      .slice(0, 200)
+      .map((r) => {
+        const chips = [];
+        chips.push(`<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`);
+
+        if ((r.tipo === "INASISTENCIA" || r.tipo === "TARDE") && r.excusa) {
+          chips.push(`<span class="chip">${r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"}</span>`);
+        }
+
+        if (r.tipo === "CONVIVENCIA" && r.nivel) {
+          chips.push(`<span class="chip">${escapeHtml(nivelLabel(r.nivel))}</span>`);
+        }
+
+        if (r.tipo === "CONVIVENCIA" && r.falta) {
+          chips.push(`<span class="chip">${escapeHtml(r.falta)}</span>`);
+        }
+
+        const obsHtml = r.obs ? `<div class="obs">${escapeHtml(r.obs)}</div>` : "";
+
+        return `
+          <div class="item">
+            <div class="item-top">
+              <div class="chips">${chips.join("")}</div>
+              <div class="when">${escapeHtml(r.fecha)} • ${escapeHtml(r.hora)}</div>
+            </div>
+            <div class="code">${escapeHtml(r.codigo)}</div>
+            ${obsHtml}
+          </div>
+        `;
+      })
+      .join("");
+
+    historial.innerHTML = html;
+  }
+
+  // --- Bindings ---
+  scanBtn?.addEventListener("click", startScan);
+  cancelScanBtn?.addEventListener("click", cancelScan);
+  guardarBtn?.addEventListener("click", guardarEvento);
+
+  limpiarBtn?.addEventListener("click", () => {
+    if (confirm("¿Seguro que deseas borrar todos los registros guardados en este dispositivo?")) {
+      clearRegistros();
+      setNotice(`<strong>Registros borrados.</strong>`);
+    }
+  });
+
+  exportarBtn?.addEventListener("click", exportarCSV);
+
+  // --- Init ---
+  refreshObsTipoOptions();
+  refreshFaltaOptions();
+  renderRegistros();
+  updateFormByTipo();
+});
