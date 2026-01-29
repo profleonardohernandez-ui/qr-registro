@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const scanBtn = document.getElementById("scanBtn");
   const cancelScanBtn = document.getElementById("cancelScanBtn");
   const guardarBtn = document.getElementById("guardarBtn");
+  const descartarBtn = document.getElementById("descartarBtn");
   const limpiarBtn = document.getElementById("limpiarBtn");
   const exportarBtn = document.getElementById("exportarBtn");
 
@@ -51,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Faltas Convivencia (Manual) + personalizadas por nivel
   const KEY_FALTAS_PREFIX = "faltas_convivencia_v1_";
   const FALTAS_DEFAULT = {
-    // Art. 58 — Situaciones Tipo I【turn27file14†L13-L41】【turn27file1†L21-L24】
     TIPO_I: [
       "I.1 Maltratar o hacer uso inadecuado de los útiles escolares tanto propios como ajenos, incluyendo materiales deportivos y zonas de uso común.",
       "I.2 Ingresar al aula y/o espacios de la institución sin autorización.",
@@ -69,8 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "I.14 Excluir o señalar por razones de género u orientación sexual a cualquier miembro de la comunidad educativa.",
       "I.15 Dañar las zonas verdes de la Institución o corredores ecológicos de la Institución.",
     ],
-
-    // Art. 59 — Situaciones Tipo II【turn27file1†L25-L39】【turn27file9†L13-L31】
     TIPO_II: [
       "II.1 Reincidencia, en una falta leve (tipo I) que implique cualquier tipo de agresión.",
       "II.2 Ingresar y/o salir de la institución sin autorización.",
@@ -83,8 +81,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "II.9 Traer y/o consultar páginas web que promuevan la pornografía y la violencia.",
       "II.10 Perturbar de forma sistemática e insistente a cualquier miembro de la comunidad con mensajes escritos o verbales que agredan su dignidad.",
     ],
-
-    // Art. 60 — Situaciones Tipo III【turn27file3†L10-L40】【turn27file0†L22-L29】
     TIPO_III: [
       "III.1 Las agresiones físicas con la intención de causar daño a compañeros, profesores, directivos, administrativos y demás miembros de la comunidad educativa, cuando el hecho se efectúe dentro de las instalaciones del plantel o en actividades programadas en otros lugares y generen incapacidad, calificada por legista.",
       "III.2 Apropiarse de objetos sin el consentimiento del propietario; en calidad de hurto o abuso de confianza.",
@@ -271,7 +267,6 @@ document.addEventListener("DOMContentLoaded", () => {
     optOther.textContent = "Otra (escribir abajo)";
     obsTipo.appendChild(optOther);
 
-    // restaura selección si aplica
     if ([...obsTipo.options].some(o => o.value === current)) {
       obsTipo.value = current;
     } else {
@@ -325,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
       falta.value = "";
     }
 
-    // controla visibilidad del input “faltaOtra”
     refreshFaltaOtraUI();
   }
 
@@ -347,262 +341,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       await qrScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        async (codigoQR) => {
-          try { await qrScanner.stop(); } catch {}
-          qrReader.style.display = "none";
-          cancelScanBtn.style.display = "none";
-
-          const a = new Date();
-          pending = {
-            codigo: codigoQR,
-            fecha: a.toLocaleDateString(),
-            hora: a.toLocaleTimeString(),
-            fechaISO: a.toISOString().slice(0, 10),
-            timestamp: a.toISOString(),
-            tipo: "INASISTENCIA",
-            excusa: null,
-            nivel: null,
-            falta: "",
-            obs: ""
-          };
-
-          codigoActual.textContent = `Código: ${codigoQR}`;
-          horaActual.textContent = `Hora: ${pending.fecha} • ${pending.hora}`;
-
-          tipo.value = "INASISTENCIA";
-          if (excusa) excusa.value = "SIN_EXCUSA";
-          if (nivel) nivel.value = "TIPO_I";
-          if (falta) falta.value = "";
-          if (faltaOtra) faltaOtra.value = "";
-          if (obsTipo) obsTipo.value = "";
-          if (obs) obs.value = "";
-
-          refreshObsTipoOptions();
-          refreshFaltaOptions();
-          updateFormByTipo();
-
-          setNotice(`<strong>QR leído:</strong> ${escapeHtml(codigoQR)}<br><span class="small">Clasifica y guarda.</span>`);
-          formEvento.style.display = "block";
-        }
-      );
-    } catch (e) {
-      qrReader.style.display = "none";
-      cancelScanBtn.style.display = "none";
-      setNotice(`<strong>No se pudo iniciar la cámara.</strong><br><span class="small">Revisa permisos del navegador.</span>`);
-    }
-  }
-
-  async function cancelScan() {
-    try { await qrScanner?.stop(); } catch {}
-    qrReader.style.display = "none";
-    cancelScanBtn.style.display = "none";
-    setNotice(`<strong>Escaneo cancelado.</strong> Presiona <em>Escanear QR</em> para intentarlo de nuevo.`);
-  }
-
-  // --- Form behavior ---
-  function updateFormByTipo() {
-    const t = tipo.value;
-
-    // Excusa aplica para INASISTENCIA y TARDE
-    const needsExcusa = (t === "INASISTENCIA" || t === "TARDE");
-    wrapExcusa.style.display = needsExcusa ? "grid" : "none";
-
-    // Convivencia: nivel + falta
-    const isConvivencia = (t === "CONVIVENCIA");
-    wrapNivel.style.display = isConvivencia ? "grid" : "none";
-    wrapFalta.style.display = isConvivencia ? "grid" : "none";
-    if (isConvivencia) {
-      refreshFaltaOptions();
-    } else {
-      wrapFaltaOtra.style.display = "none";
-    }
-
-    // Observación tipo (desplegable) solo para TARDE
-    wrapObsTipo.style.display = (t === "TARDE") ? "grid" : "none";
-  }
-
-  tipo?.addEventListener("change", updateFormByTipo);
-
-  nivel?.addEventListener("change", () => {
-    refreshFaltaOptions();
-  });
-
-  falta?.addEventListener("change", () => {
-    refreshFaltaOtraUI();
-    if (falta.value === "_OTRA") {
-      faltaOtra?.focus();
-    }
-  });
-
-  // Observación tipo: si seleccionas una opción (no "Otra"), se copia a la observación
-  obsTipo?.addEventListener("change", () => {
-    const v = obsTipo.value;
-    if (!v) return;
-    if (v === "_OTRA") {
-      obs.focus();
-      return;
-    }
-    obs.value = v;
-  });
-
-  function guardarEvento() {
-    if (!pending) {
-      setNotice(`<strong>Primero escanea un QR.</strong>`);
-      return;
-    }
-
-    pending.tipo = tipo.value;
-    pending.obs = obs.value.trim();
-
-    // --- INASISTENCIA / TARDE ---
-    if (pending.tipo === "INASISTENCIA" || pending.tipo === "TARDE") {
-      pending.excusa = excusa.value;
-      pending.nivel = null;
-      pending.falta = "";
-
-      // Persistir “Observación tipo” cuando el usuario eligió “Otra”
-      if (pending.tipo === "TARDE" && obsTipo?.value === "_OTRA") {
-        const nueva = (obs.value || "").trim();
-        if (nueva) {
-          obsTardeList = pushUniqueAndSave(KEY_OBS_TARDE, obsTardeList, nueva);
-          refreshObsTipoOptions();
-        }
-      }
-
-    // --- CONVIVENCIA ---
-    } else if (pending.tipo === "CONVIVENCIA") {
-      pending.nivel = nivel.value;
-      pending.excusa = null;
-
-      // falta: del desplegable o “Otra”
-      if (falta.value === "_OTRA") {
-        const nuevaFalta = (faltaOtra?.value || "").trim();
-        pending.falta = nuevaFalta;
-
-        // Guardar nueva falta para ese nivel
-        if (nuevaFalta) {
-          const n = pending.nivel || "TIPO_I";
-          const k = faltasKeyByNivel(n);
-          const updated = pushUniqueAndSave(k, (faltasList[n] || []), nuevaFalta);
-          faltasList[n] = updated;
-          refreshFaltaOptions();
-        }
-      } else {
-        pending.falta = falta.value || "";
-      }
-
-    } else {
-      // No debería pasar (dejamos el else por seguridad)
-      pending.excusa = null;
-      pending.nivel = null;
-      pending.falta = "";
-    }
-
-    addRegistro(pending);
-    setNotice(`<strong>Guardado.</strong> Puedes escanear el siguiente QR.`);
-    pending = null;
-    formEvento.style.display = "none";
-    codigoActual.textContent = "Código: —";
-    horaActual.textContent = "Hora: —";
-  }
-
-  function exportarCSV() {
-    const arr = getRegistros();
-    const header = [
-      "timestamp",
-      "fechaISO",
-      "fecha",
-      "hora",
-      "codigo",
-      "tipo",
-      "excusa",
-      "clasificacion",
-      "falta",
-      "observacion"
-    ];
-    const rows = [toCSVRow(header)];
-    for (const r of arr.slice().reverse()) {
-      rows.push(
-        toCSVRow([
-          r.timestamp,
-          r.fechaISO,
-          r.fecha,
-          r.hora,
-          r.codigo,
-          r.tipo,
-          r.excusa || "",
-          r.nivel || "",
-          r.falta || "",
-          r.obs || ""
-        ])
-      );
-    }
-    const now = new Date().toISOString().slice(0, 10);
-    downloadText(`registros_qr_${now}.csv`, rows.join("\n"));
-  }
-
-  function renderRegistros() {
-    const arr = getRegistros();
-    totalReg.textContent = String(arr.length);
-
-    if (!arr.length) {
-      historial.innerHTML = `<div class="empty">Aún no hay registros.</div>`;
-      return;
-    }
-
-    const html = arr
-      .slice(0, 200)
-      .map((r) => {
-        const chips = [];
-        chips.push(`<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`);
-
-        if ((r.tipo === "INASISTENCIA" || r.tipo === "TARDE") && r.excusa) {
-          chips.push(`<span class="chip">${r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"}</span>`);
-        }
-
-        if (r.tipo === "CONVIVENCIA" && r.nivel) {
-          chips.push(`<span class="chip">${escapeHtml(nivelLabel(r.nivel))}</span>`);
-        }
-
-        if (r.tipo === "CONVIVENCIA" && r.falta) {
-          chips.push(`<span class="chip">${escapeHtml(r.falta)}</span>`);
-        }
-
-        const obsHtml = r.obs ? `<div class="obs">${escapeHtml(r.obs)}</div>` : "";
-
-        return `
-          <div class="item">
-            <div class="item-top">
-              <div class="chips">${chips.join("")}</div>
-              <div class="when">${escapeHtml(r.fecha)} • ${escapeHtml(r.hora)}</div>
-            </div>
-            <div class="code">${escapeHtml(r.codigo)}</div>
-            ${obsHtml}
-          </div>
-        `;
-      })
-      .join("");
-
-    historial.innerHTML = html;
-  }
-
-  // --- Bindings ---
-  scanBtn?.addEventListener("click", startScan);
-  cancelScanBtn?.addEventListener("click", cancelScan);
-  guardarBtn?.addEventListener("click", guardarEvento);
-  limpiarBtn?.addEventListener("click", () => {
-    if (confirm("¿Seguro que deseas borrar todos los registros guardados en este dispositivo?")) {
-      clearRegistros();
-      setNotice(`<strong>Registros borrados.</strong>`);
-    }
-  });
-  exportarBtn?.addEventListener("click", exportarCSV);
-
-  // --- Init ---
-  refreshObsTipoOptions();
-  refreshFaltaOptions();
-  renderRegistros();
-  updateFormByTipo();
-});
+        { facingMode: "e
