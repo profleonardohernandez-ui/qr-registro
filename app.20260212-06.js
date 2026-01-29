@@ -32,6 +32,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Storage ---
   const KEY = "registros_qr_v1";
 
+  // Observaciones tipo (Llegada tarde): defaults + persistentes
+  const OBS_CUSTOM_KEY = "obs_tarde_custom_v1";
+  const OBS_DEFAULT = [
+    "Estaba comprando en la tienda",
+    "No escuché el timbre",
+    "Se me olvidó",
+    "Estaba con otro profesor"
+  ];
+
   function getRegistros() {
     try {
       const raw = localStorage.getItem(KEY);
@@ -44,13 +53,13 @@ document.addEventListener("DOMContentLoaded", () => {
         timestamp: r.timestamp || "",
         tipo: r.tipo || "INASISTENCIA",
         excusa: r.excusa ?? null,
-        nivel: (function(){
-        const n = r.nivel || null;
-        if (n === "LEVE") return "TIPO_I";
-        if (n === "MODERADO") return "TIPO_II";
-        if (n === "GRAVE") return "TIPO_III";
-        return n;
-      })(),
+        nivel: (function () {
+          const n = r.nivel || null;
+          if (n === "LEVE") return "TIPO_I";
+          if (n === "MODERADO") return "TIPO_II";
+          if (n === "GRAVE") return "TIPO_III";
+          return n;
+        })(),
         obs: r.obs || ""
       }));
     } catch {
@@ -74,6 +83,89 @@ document.addEventListener("DOMContentLoaded", () => {
     renderRegistros();
   }
 
+  // --- Observaciones tipo persistentes (Llegada tarde) ---
+  function normalize(s) {
+    return String(s || "").trim();
+  }
+
+  function lower(s) {
+    return normalize(s).toLowerCase();
+  }
+
+  function getCustomObs() {
+    try {
+      const raw = localStorage.getItem(OBS_CUSTOM_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.map(normalize).filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function setCustomObs(arr) {
+    localStorage.setItem(OBS_CUSTOM_KEY, JSON.stringify(arr));
+  }
+
+  function addCustomObsIfNeeded(text) {
+    const t = normalize(text);
+    if (!t) return false;
+
+    // No guardar si ya existe en defaults/custom (case-insensitive)
+    const tL = lower(t);
+    const all = [...OBS_DEFAULT, ...getCustomObs()];
+    if (all.some((x) => lower(x) === tL)) return false;
+
+    const custom = getCustomObs();
+    custom.push(t);
+    setCustomObs(custom);
+    return true;
+  }
+
+  function buildObsTipoOptions() {
+    if (!obsTipo) return;
+
+    const current = obsTipo.value || "";
+    const custom = getCustomObs();
+
+    // reconstruir desde cero
+    obsTipo.innerHTML = "";
+
+    // placeholder
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "— seleccionar —";
+    obsTipo.appendChild(opt0);
+
+    // defaults
+    for (const t of OBS_DEFAULT) {
+      const o = document.createElement("option");
+      o.value = t;
+      o.textContent = t;
+      obsTipo.appendChild(o);
+    }
+
+    // custom persistentes
+    for (const t of custom) {
+      const o = document.createElement("option");
+      o.value = t;
+      o.textContent = t;
+      obsTipo.appendChild(o);
+    }
+
+    // opción Otra
+    const o = document.createElement("option");
+    o.value = "_OTRA";
+    o.textContent = "Otra (escribir abajo)";
+    obsTipo.appendChild(o);
+
+    // intentar restaurar selección si aún existe
+    if ([...obsTipo.options].some((x) => x.value === current)) {
+      obsTipo.value = current;
+    } else {
+      obsTipo.value = "";
+    }
+  }
+
   // --- Helpers ---
   function escapeHtml(str) {
     return String(str)
@@ -89,7 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function chipTipoClass(t) {
-    if (t === "ASISTENCIA") return "tipo-asistencia";
     if (t === "TARDE") return "tipo-tarde";
     if (t === "CONVIVENCIA") return "tipo-convivencia";
     return "tipo-inasistencia";
@@ -99,7 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (n === "TIPO_I") return "Tipo I";
     if (n === "TIPO_II") return "Tipo II";
     if (n === "TIPO_III") return "Tipo III";
-    // compatibilidad por si llega algo antiguo
     if (n === "LEVE") return "Tipo I";
     if (n === "MODERADO") return "Tipo II";
     if (n === "GRAVE") return "Tipo III";
@@ -136,6 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelScanBtn.style.display = "inline-block";
     setNotice(`<strong>Escaneando...</strong><br><span class="small">Apunta la cámara al código QR.</span>`);
 
+    // Regla de oro: no tocamos nada del flujo que ya funciona
     if (!qrScanner) qrScanner = new Html5Qrcode("qr-reader");
 
     try {
@@ -164,10 +255,11 @@ document.addEventListener("DOMContentLoaded", () => {
           horaActual.textContent = `Hora: ${pending.fecha} • ${pending.hora}`;
 
           tipo.value = "INASISTENCIA";
-          if (excusa) excusa.value = "SIN_EXCUSA";
-          if (nivel) nivel.value = "TIPO_I";
-          if (obsTipo) obsTipo.value = "";
-          if (obs) obs.value = "";
+          excusa.value = "SIN_EXCUSA";
+          nivel.value = "TIPO_I";
+          obs.value = "";
+          buildObsTipoOptions();
+          obsTipo.value = "";
           updateFormByTipo();
 
           setNotice(`<strong>QR leído:</strong> ${escapeHtml(codigoQR)}<br><span class="small">Clasifica y guarda.</span>`);
@@ -192,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateFormByTipo() {
     const t = tipo.value;
 
-    // Excusa aplica tanto para INASISTENCIA como para TARDE
+    // Excusa aplica para INASISTENCIA y TARDE
     const needsExcusa = (t === "INASISTENCIA" || t === "TARDE");
     wrapExcusa.style.display = needsExcusa ? "grid" : "none";
 
@@ -200,14 +292,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const needsNivel = (t === "CONVIVENCIA");
     wrapNivel.style.display = needsNivel ? "grid" : "none";
 
-    // Observación tipo (desplegable) solo para TARDE
-    if (wrapObsTipo) wrapObsTipo.style.display = (t === "TARDE") ? "grid" : "none";
+    // Observación tipo solo para TARDE
+    wrapObsTipo.style.display = (t === "TARDE") ? "grid" : "none";
+
+    // Cada vez que entras a TARDE, refresca opciones por si ya agregaste nuevas
+    if (t === "TARDE") buildObsTipoOptions();
   }
 
-  tipo?.addEventListener("change", updateFormByTipo);
+  tipo.addEventListener("change", updateFormByTipo);
 
   // Observación tipo: si seleccionas una opción (no "Otra"), se copia a la observación
-  obsTipo?.addEventListener("change", () => {
+  obsTipo.addEventListener("change", () => {
     const v = obsTipo.value;
     if (!v) return;
     if (v === "_OTRA") {
@@ -232,9 +327,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (pending.tipo === "CONVIVENCIA") {
       pending.nivel = nivel.value;
       pending.excusa = null;
-    } else {
-      pending.excusa = null;
-      pending.nivel = null;
+    }
+
+    // Si es TARDE y escribió una observación nueva, guardarla para el futuro
+    if (pending.tipo === "TARDE") {
+      const saved = addCustomObsIfNeeded(pending.obs);
+      if (saved) buildObsTipoOptions();
     }
 
     addRegistro(pending);
@@ -320,18 +418,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Bindings ---
-  scanBtn?.addEventListener("click", startScan);
-  cancelScanBtn?.addEventListener("click", cancelScan);
-  guardarBtn?.addEventListener("click", guardarEvento);
-  limpiarBtn?.addEventListener("click", () => {
+  scanBtn.addEventListener("click", startScan);
+  cancelScanBtn.addEventListener("click", cancelScan);
+  guardarBtn.addEventListener("click", guardarEvento);
+  limpiarBtn.addEventListener("click", () => {
     if (confirm("¿Seguro que deseas borrar todos los registros guardados en este dispositivo?")) {
       clearRegistros();
       setNotice(`<strong>Registros borrados.</strong>`);
     }
   });
-  exportarBtn?.addEventListener("click", exportarCSV);
+  exportarBtn.addEventListener("click", exportarCSV);
 
   // --- Init ---
+  buildObsTipoOptions();
   renderRegistros();
   updateFormByTipo();
 });
