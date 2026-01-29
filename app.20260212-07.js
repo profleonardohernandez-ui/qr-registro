@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancelScanBtn = document.getElementById("cancelScanBtn");
   const guardarBtn = document.getElementById("guardarBtn");
 
-  const syncBtn = document.getElementById("syncBtn"); // NUEVO
+  const syncBtn = document.getElementById("syncBtn"); // Sync
   const limpiarBtn = document.getElementById("limpiarBtn");
   const exportarBtn = document.getElementById("exportarBtn");
 
@@ -55,54 +55,54 @@ document.addEventListener("DOMContentLoaded", () => {
     "Estaba con otro profesor",
   ];
 
-  // Faltas Convivencia (Manual) + personalizadas por nivel
+  // Faltas Convivencia — ULTRACORTAS con código
   const KEY_FALTAS_PREFIX = "faltas_convivencia_v1_";
   const FALTAS_DEFAULT = {
     TIPO_I: [
-      "I.1 Maltratar o hacer uso inadecuado de los útiles escolares tanto propios como ajenos, incluyendo materiales deportivos y zonas de uso común.",
-      "I.2 Ingresar al aula y/o espacios de la institución sin autorización.",
-      "I.3 Hacer uso inadecuado de las instalaciones de la institución, con prácticas que ponen en riesgo su integridad física y la de los demás miembros de la comunidad educativa.",
-      "I.4 Conservar y/o retener información, comunicados o circulares dirigidas a padres de familia o acudientes.",
-      "I.5 Comerciar, hacer colectas, apuestas, rifas y demás similares, dentro de la institución, so pena de incurrir en un delito como consecuencia del incumplimiento.",
-      "I.6 Presentar un comportamiento inadecuado e irrespetuoso dentro de las instalaciones de la institución educativa.",
-      "I.7 Hacer uso inadecuado o portar de forma inapropiada dentro y fuera de la institución educativa el uniforme.",
-      "I.8 El uso inadecuado del teléfono celular y/o elementos tecnológicos dentro de la clase.",
-      "I.9 Incumplir de forma reiterada con sus compromisos académicos y/o actividades de recuperación a las que tenga derecho.",
-      "I.10 La evasión, el retardo, inasistencia o no participación, sin causa justa de las actividades académicas y/o pedagógicas programadas por la institución educativa.",
-      "I.11 Usar un vocabulario soez, descalificativo, denigrante o que atente contra la dignidad de cualquier miembro de la comunidad educativa.",
-      "I.12 Agresiones digitales, mensajes, memes, stickers, imágenes o correos electrónicos insultantes u ofensivos, que buscan afectar negativamente a la otra persona.",
-      "I.13 Uso de gestos o vocabulario irrespetuoso con connotación sexual.",
-      "I.14 Excluir o señalar por razones de género u orientación sexual a cualquier miembro de la comunidad educativa.",
-      "I.15 Dañar las zonas verdes de la Institución o corredores ecológicos de la Institución.",
+      "I.1 Daño/uso indebido de útiles y materiales",
+      "I.2 Ingreso a aula/espacios sin permiso",
+      "I.3 Conductas de riesgo en instalaciones",
+      "I.4 Retener/ocultar comunicados a acudientes",
+      "I.5 Ventas/colectas/apuestas dentro del colegio",
+      "I.6 Irrespeto o conducta inadecuada",
+      "I.7 Uniforme: uso/porte inadecuado",
+      "I.8 Celular/tecnología: uso indebido en clase",
+      "I.9 Incumplimiento académico reiterado",
+      "I.10 Evasión/retardo/inasistencia injustificada",
+      "I.11 Lenguaje soez o denigrante",
+      "I.12 Agresión digital (mensajes/memes ofensivos)",
+      "I.13 Lenguaje/gestos sexuales inapropiados",
+      "I.14 Discriminación por género/orientación sexual",
+      "I.15 Daño a zonas verdes/corredores ecológicos",
     ],
     TIPO_II: [
-      "II.1 Reincidencia, en una falta leve (tipo I) que implique cualquier tipo de agresión.",
-      "II.2 Ingresar y/o salir de la institución sin autorización.",
-      "II.3 Perturbar el normal desarrollo de las clases con acciones violentas.",
-      "II.4 Irrespetar físicamente a los integrantes de la comunidad educativa.",
-      "II.5 Agresiones repetitivas de forma física, escritas y verbales, con contenido sexual, incluyendo aquellas que discriminen por su orientación sexual usando medios tecnológicos (redes sociales, email, blog, páginas de internet, etc.).",
-      "II.6 Participar y fomentar en juegos violentos que atenten contra la integridad física o dignidad de la persona.",
-      "II.7 Consumir o portar cigarrillos, vaper y/o sustancias psicoactivas dentro de la Institución Educativa.",
-      "II.8 Presentarse en la institución Educativa en estado de embriaguez o bajo los efectos de sustancias que alteran su estado de conciencia.",
-      "II.9 Traer y/o consultar páginas web que promuevan la pornografía y la violencia.",
-      "II.10 Perturbar de forma sistemática e insistente a cualquier miembro de la comunidad con mensajes escritos o verbales que agredan su dignidad.",
+      "II.1 Reincidencia en Tipo I con agresión",
+      "II.2 Entrada/salida sin autorización",
+      "II.3 Interrumpir clase con violencia",
+      "II.4 Irrespeto físico a miembros",
+      "II.5 Acoso sexual/discriminación (incl. digital)",
+      "II.6 Juegos violentos/peligrosos",
+      "II.7 Portar/consumir cigarrillo, vaper o SPA",
+      "II.8 Llegar bajo efectos de alcohol/SPA",
+      "II.9 Consultar/traer pornografía o violencia",
+      "II.10 Hostigamiento sistemático (insistencia/mensajes)",
     ],
     TIPO_III: [
-      "III.1 Las agresiones físicas con la intención de causar daño a compañeros, profesores, directivos, administrativos y demás miembros de la comunidad educativa, cuando el hecho se efectúe dentro de las instalaciones del plantel o en actividades programadas en otros lugares y generen incapacidad, calificada por legista.",
-      "III.2 Apropiarse de objetos sin el consentimiento del propietario; en calidad de hurto o abuso de confianza.",
-      "III.3 Agredir física, verbal o moralmente a cualquier miembro de la comunidad educativa.",
-      "III.4 Participar o propiciar enfrentamientos, sabotajes y protestas violentas contra cualquier miembro de la comunidad educativa.",
-      "III.5 Participar o propiciar enfrentamientos, haciendo imputaciones deshonrosas, imputando falsamente una conducta típica o repitiera publicaciones o reproduciendo injuria o calumnia.",
-      "III.6 Portar armas u objetos que atenten contra la integridad física de cualquier miembro de la comunidad educativa.",
-      "III.7 Intentar hacer daño al cuerpo o salud de cualquier miembro de la comunidad educativa.",
-      "III.8 Hacer fraude, copia, intento de copia, plagio en las evaluaciones o trabajos, colusión, adulteración de calificaciones o falsificación de firmas.",
-      "III.9 Presentar trabajos como propios sin reconocer las fuentes citadas o que hayan sido elaborados por otras personas, violar las normas de derechos de autor.",
-      "III.10 Dañar intencionalmente los muebles, instalaciones o equipos de la institución, o de los miembros de la comunidad educativa.",
-      "III.11 Poseer, comprar, vender, ingerir o inducir a otro al consumo de licor o cualquier sustancia psicoactiva dentro de la institución, en el transporte escolar o en actividades que realice la institución fuera de sus instalaciones.",
-      "III.12 Participar en situaciones que afectan los Derechos humanos sexuales y reproductivos, como son los delitos contra la libertad, la integridad, la identidad de género y la orientación sexual.",
-      "III.13 Utilizar el nombre de la institución, sin autorización, para obtener beneficios personales.",
-      "III.14 Divulgación de fotos comprometedoras para el estudiante sin su previo consentimiento.",
-      "III.15 Publicación de mensajes, fotos, vídeos, sin consentimiento de la persona.",
+      "III.1 Agresión física con incapacidad",
+      "III.2 Hurto/abuso de confianza",
+      "III.3 Agresión verbal/moral grave",
+      "III.4 Sabotaje/protesta violenta",
+      "III.5 Injuria/calumnia/publicación deshonrosa",
+      "III.6 Portar armas/objetos peligrosos",
+      "III.7 Atentar contra salud/integridad",
+      "III.8 Fraude/copia/plagio/falsificación",
+      "III.9 Plagio/derechos de autor",
+      "III.10 Daño intencional a muebles/equipos",
+      "III.11 Licor/SPA: poseer/vender/inducir",
+      "III.12 Delitos sexuales/DHSSR (identidad/orientación)",
+      "III.13 Usar nombre del colegio sin permiso",
+      "III.14 Divulgar fotos comprometedoras sin permiso",
+      "III.15 Publicar mensajes/fotos/videos sin permiso",
     ],
   };
 
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })(),
         falta: r.falta || "",
         obs: r.obs || "",
-        syncedAt: r.syncedAt || "", // NUEVO
+        syncedAt: r.syncedAt || "", // sync marker
       }));
     } catch {
       return [];
@@ -403,7 +403,6 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({ deviceId, exportedAt, records }),
       });
 
-      // Intentar leer respuesta (si el navegador permite CORS)
       const txt = await res.text();
       let out = null;
       try {
@@ -413,35 +412,46 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (!out || out.ok !== true) {
-        // Nota: a veces el envío sí llega pero el navegador bloquea leer respuesta.
         throw new Error(out && out.error ? out.error : "No se pudo confirmar respuesta de Google");
       }
 
-      // Marcar como sincronizados SOLO si confirmamos OK
-      const syncedAt = new Date().toISOString();
+      // Confirmado OK: ofrecer borrar lo enviado
       const uids = new Set(records.map((x) => x.uid));
+      const enviados = pendingSync.length;
 
-      const updated = all.map((r) => {
-        const uid = makeUid(r);
-        if (!r.syncedAt && uids.has(uid)) return { ...r, syncedAt };
-        return r;
-      });
-
-      setRegistros(updated);
-      renderRegistros();
-
-      setNotice(
-        `<strong>Sincronización completa.</strong><br>` +
-          `<span class="small">Enviados: ${out.received} • Nuevos: ${out.appended} • Duplicados: ${out.duplicates}</span>`
+      const borrar = confirm(
+        `✅ Sincronización confirmada.\n\n¿Borrar del dispositivo los ${enviados} registros enviados?\n(Recomendado para dejar el celular limpio)`
       );
+
+      if (borrar) {
+        const remaining = all.filter((r) => !uids.has(makeUid(r)));
+        setRegistros(remaining);
+        renderRegistros();
+        setNotice(
+          `<strong>Sincronización completa.</strong><br>` +
+            `<span class="small">Enviados: ${out.received} • Nuevos: ${out.appended} • Duplicados: ${out.duplicates} • Borrados local: ${enviados}</span>`
+        );
+      } else {
+        const syncedAt = new Date().toISOString();
+        const updated = all.map((r) => {
+          const uid = makeUid(r);
+          if (!r.syncedAt && uids.has(uid)) return { ...r, syncedAt };
+          return r;
+        });
+        setRegistros(updated);
+        renderRegistros();
+        setNotice(
+          `<strong>Sincronización completa.</strong><br>` +
+            `<span class="small">Enviados: ${out.received} • Nuevos: ${out.appended} • Duplicados: ${out.duplicates} • Guardados local: Sí</span>`
+        );
+      }
     } catch (err) {
-      // No marcamos syncedAt si no pudimos confirmar.
       setNotice(
-        `<strong>Envío realizado, pero NO se pudo confirmar.</strong><br>` +
+        `<strong>No se pudo confirmar la sincronización.</strong><br>` +
           `<span class="small">${escapeHtml(
             String(err && err.message ? err.message : err)
           )}</span><br>` +
-          `<span class="small">Abre el Sheet y verifica si llegaron filas. Puedes reintentar: no se duplicará (usa UID).</span>`
+          `<span class="small">Abre el Sheet y verifica si llegaron filas. Puedes reintentar: no se duplicará.</span>`
       );
     } finally {
       if (syncBtn) {
@@ -485,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
             nivel: null,
             falta: "",
             obs: "",
-            syncedAt: "", // NUEVO
+            syncedAt: "",
           };
 
           codigoActual.textContent = `Código: ${codigoQR}`;
@@ -544,7 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isConvivencia) {
       refreshFaltaOptions();
     } else {
-      wrapFaltaOtra.style.display = "none";
+      if (wrapFaltaOtra) wrapFaltaOtra.style.display = "none";
     }
 
     wrapObsTipo.style.display = t === "TARDE" ? "grid" : "none";
@@ -587,7 +597,7 @@ document.addEventListener("DOMContentLoaded", () => {
       pending.nivel = null;
       pending.falta = "";
 
-      // Persistir “Observación tipo” cuando el usuario eligió “Otra”
+      // Guardar “otra” observación de tarde para futuras veces
       if (pending.tipo === "TARDE" && obsTipo?.value === "_OTRA") {
         const nueva = (obs.value || "").trim();
         if (nueva) {
@@ -724,7 +734,7 @@ document.addEventListener("DOMContentLoaded", () => {
   cancelScanBtn?.addEventListener("click", cancelScan);
   guardarBtn?.addEventListener("click", guardarEvento);
 
-  syncBtn?.addEventListener("click", syncToGoogleSheets); // NUEVO
+  syncBtn?.addEventListener("click", syncToGoogleSheets);
 
   limpiarBtn?.addEventListener("click", () => {
     if (confirm("¿Seguro que deseas borrar todos los registros guardados en este dispositivo?")) {
