@@ -9,8 +9,8 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./style.css" />
 
-  <!-- html5-qrcode (LOCAL, para offline robusto) -->
-  <script src="./html5-qrcode.min.js" defer></script>
+  <!-- html5-qrcode (LOCAL, offline robusto) -->
+  <script src="./html5-qrcode.min.js"></script>
   <!-- APP -->
   <script src="./app.20260212-07.js" defer></script>
 </head>
@@ -78,14 +78,14 @@
           </select>
         </div>
 
-        <!-- NUEVO: Falta específica (solo Convivencia) -->
+        <!-- Falta específica (solo Convivencia) -->
         <div class="field" id="wrapFalta" style="display:none;">
           <label for="falta">Falta específica (según Manual)</label>
           <select id="falta"></select>
           <div class="small">Tip: si eliges “Otra”, puedes guardarla para usarla de nuevo.</div>
         </div>
 
-        <!-- NUEVO: texto para “Otra” (solo Convivencia cuando aplique) -->
+        <!-- Texto para “Otra” (solo Convivencia cuando aplique) -->
         <div class="field" id="wrapFaltaOtra" style="display:none;">
           <label for="faltaOtra">Si elegiste “Otra”, escribe aquí</label>
           <input id="faltaOtra" placeholder="Ej: Uso indebido de herramienta en huerta (sin autorización)" />
@@ -94,7 +94,10 @@
         <div class="field" id="wrapObsTipo" style="display:none;">
           <label for="obsTipo">Observación tipo (para llegadas tarde)</label>
           <select id="obsTipo"></select>
-          <div class="small">Tip: si eliges una opción, se copiará a “Observación”. Si eliges “Otra” y escribes, quedará guardada.</div>
+          <div class="small">
+            Tip: si eliges una opción, se copiará a “Observación”.
+            Si eliges “Otra” y escribes, quedará guardada.
+          </div>
         </div>
 
         <div class="field">
@@ -102,8 +105,10 @@
           <textarea id="obs" placeholder="Ej: llegó 10 min tarde por transporte / llamado de atención por ruido..."></textarea>
         </div>
 
+        <!-- SOLO Guardar + Cambiar estudiante -->
         <div class="row">
           <button id="guardarBtn" class="btn ok">💾 Guardar</button>
+          <button id="descartarBtn" class="btn ghost">↩ Cambiar estudiante</button>
         </div>
       </div>
     </section>
@@ -111,6 +116,7 @@
     <section class="card">
       <div class="card-title">3) Historial</div>
 
+      <!-- Botones administrativos aquí -->
       <div class="row">
         <button id="exportarBtn" class="btn">⬇ Exportar CSV</button>
         <button id="limpiarBtn" class="btn warn">🧹 Limpiar todo</button>
@@ -122,7 +128,7 @@
       </div>
 
       <div id="historial" class="historial"></div>
-</section>
+    </section>
 
   </main>
 
@@ -142,4 +148,3 @@
   </script>
 </body>
 </html>
-
