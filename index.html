@@ -9,21 +9,22 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./style.css" />
 
-  <!-- html5-qrcode -->
+  <!-- html5-qrcode (LOCAL, para offline robusto) -->
   <script src="./html5-qrcode.min.js" defer></script>
   <!-- APP -->
-  <script src="./app.20260212-06.js" defer></script>
+  <script src="./app.20260212-07.js" defer></script>
 </head>
+
 <body>
   <header class="topbar">
     <div class="brand">
       <div class="logo">QR</div>
       <div>
         <div class="title">Registro por QR (offline)</div>
-        <div class="subtitle">Asistencia • Llegadas tarde • Convivencia</div>
+        <div class="subtitle">Inasistencias • Llegadas tarde • Convivencia</div>
       </div>
     </div>
-    <div class="badge">Versión: 2026-02-12-06</div>
+    <div class="badge">Versión: 2026-02-12-07</div>
   </header>
 
   <main class="container">
@@ -69,31 +70,37 @@
         </div>
 
         <div class="field" id="wrapNivel" style="display:none;">
-            <label for="nivel">Clasificación (Tipo I / II / III)</label>
-            <select id="nivel">
-              <option value="TIPO_I">Tipo I</option>
-              <option value="TIPO_II">Tipo II</option>
-              <option value="TIPO_III">Tipo III</option>
-            </select>
-          </div>
+          <label for="nivel">Clasificación (Tipo I / II / III)</label>
+          <select id="nivel">
+            <option value="TIPO_I">Tipo I</option>
+            <option value="TIPO_II">Tipo II</option>
+            <option value="TIPO_III">Tipo III</option>
+          </select>
+        </div>
 
-          <div class="field" id="wrapObsTipo" style="display:none;">
-            <label for="obsTipo">Observación tipo (para llegadas tarde)</label>
-            <select id="obsTipo">
-              <option value="">— seleccionar —</option>
-              <option value="Estaba comprando en la tienda">Estaba comprando en la tienda</option>
-              <option value="No escuché el timbre">No escuché el timbre</option>
-              <option value="Se me olvidó">Se me olvidó</option>
-              <option value="Estaba con otro profesor">Estaba con otro profesor</option>
-              <option value="_OTRA">Otra (escribir abajo)</option>
-            </select>
-            <div class="small">Tip: si eliges una opción, se copiará a “Observación”.</div>
-          </div>
+        <!-- NUEVO: Falta específica (solo Convivencia) -->
+        <div class="field" id="wrapFalta" style="display:none;">
+          <label for="falta">Falta específica (según Manual)</label>
+          <select id="falta"></select>
+          <div class="small">Tip: si eliges “Otra”, puedes guardarla para usarla de nuevo.</div>
+        </div>
 
-          <div class="field">
-            <label for="obs">Observación (opcional)</label>
-            <textarea id="obs" placeholder="Ej: llegó 10 min tarde por transporte / llamado de atención por ruido..."></textarea>
-          </div>
+        <!-- NUEVO: texto para “Otra” (solo Convivencia cuando aplique) -->
+        <div class="field" id="wrapFaltaOtra" style="display:none;">
+          <label for="faltaOtra">Si elegiste “Otra”, escribe aquí</label>
+          <input id="faltaOtra" placeholder="Ej: Uso indebido de herramienta en huerta (sin autorización)" />
+        </div>
+
+        <div class="field" id="wrapObsTipo" style="display:none;">
+          <label for="obsTipo">Observación tipo (para llegadas tarde)</label>
+          <select id="obsTipo"></select>
+          <div class="small">Tip: si eliges una opción, se copiará a “Observación”. Si eliges “Otra” y escribes, quedará guardada.</div>
+        </div>
+
+        <div class="field">
+          <label for="obs">Observación (opcional)</label>
+          <textarea id="obs" placeholder="Ej: llegó 10 min tarde por transporte / llamado de atención por ruido..."></textarea>
+        </div>
 
         <div class="row">
           <button id="guardarBtn" class="btn ok">💾 Guardar</button>
@@ -121,12 +128,12 @@
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
+        navigator.serviceWorker
+          .register("./service-worker.js", { updateViaCache: "none" })
+          .then(reg => reg.update())
+          .catch(() => {});
       });
     }
   </script>
 </body>
 </html>
-
-
-
