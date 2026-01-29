@@ -1,4 +1,4 @@
-const BUILD = "20260212-06";
+const BUILD = "20260212-07";
 const CACHE_NAME = `qr-registro-${BUILD}`;
 
 const FILES_TO_CACHE = [
@@ -7,7 +7,7 @@ const FILES_TO_CACHE = [
   "./style.css",
   "./manifest.json",
   "./html5-qrcode.min.js",
-  "./app.20260212-06.js"
+  "./app.20260212-07.js"
 ];
 
 // Install: cache + activar inmediatamente
