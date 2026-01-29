@@ -1,4 +1,4 @@
-const BUILD = "20260212-07";
+const BUILD = "20260212-07-sync1";
 const CACHE_NAME = `qr-registro-${BUILD}`;
 
 const FILES_TO_CACHE = [
@@ -69,3 +69,4 @@ self.addEventListener("fetch", (event) => {
     }
   })());
 });
+
