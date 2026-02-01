@@ -41,141 +41,24 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Storage ---
   const KEY = "registros_qr_v1";
 
-  // === CONTEXTO (PASO 3) — robusto, sin duplicaciones ===
-  const KEY_CTX_PRIMARY = "qr_contexto_sesion_v1";
-  const KEY_CTX_FALLBACKS = ["qr_contexto_sesion", "qr_contexto_sesion_v0"];
+  // === CONTEXTO (PASO 3): puente de datos desde localStorage ===
+  // Lo guarda index.html bajo esta llave:
+  // { asignatura: "Economía 11°A", bloque: "1", updatedAt: "2026-02-01T...Z" }
+  const KEY_CTX = "qr_contexto_sesion_v1";
 
+  // Horario real (54 min por hora-clase). Descanso y almuerzo NO se manejan como bloques.
+  // Ajuste solicitado:
+  // 6° inicia 12:06 p.m., 7° 1:00 p.m., 8° 1:54 p.m.
   const BLOQUE_T0_24H = {
     "1": "07:00:00",
     "2": "07:54:00",
     "3": "08:48:00",
     "4": "09:52:00",
     "5": "10:46:00",
-    "6": "11:40:00",
-    "7": "13:14:00",
-    "8": "14:08:00",
+    "6": "12:06:00",
+    "7": "13:00:00",
+    "8": "13:54:00",
   };
-
-  // (Opcional) si tu HTML tiene un span/div donde mostrar T0 “bonito”
-  const ctxT0LabelEl =
-    document.getElementById("ctxT0Label") ||
-    document.getElementById("t0Label") ||
-    document.getElementById("ctxT0");
-
-  // Intentamos detectar IDs típicos del HTML (compatibles con tus versiones previas)
-  const ctxAsignaturaEl =
-    document.getElementById("contextoClase") ||
-    document.getElementById("ctxAsignatura") ||
-    document.getElementById("asignaturaGrupo");
-
-  const ctxBloqueEl =
-    document.getElementById("horaClaseInicio") ||
-    document.getElementById("bloqueHorario") ||
-    document.getElementById("ctxBloque") ||
-    document.getElementById("bloqueInicio");
-
-  function safeParseJSON(raw, fallback) {
-    try {
-      const v = JSON.parse(raw);
-      return v ?? fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  function readContextoRawFromStorage() {
-    for (const k of [KEY_CTX_PRIMARY, ...KEY_CTX_FALLBACKS]) {
-      const raw = localStorage.getItem(k);
-      if (raw) return raw;
-    }
-    return "";
-  }
-
-  function persistContextoToStorage(ctx) {
-    try {
-      localStorage.setItem(KEY_CTX_PRIMARY, JSON.stringify(ctx));
-    } catch {
-      // si el storage falla, NO rompemos el flujo
-    }
-  }
-
-  function readContextoFromUI() {
-    const asignatura = ctxAsignaturaEl ? String(ctxAsignaturaEl.value || "").trim() : "";
-    const bloqueInicio = ctxBloqueEl ? String(ctxBloqueEl.value || "").trim() : "";
-    if (!asignatura && !bloqueInicio) return null;
-    return { asignatura, bloqueInicio };
-  }
-
-  function readContextoFromStorage() {
-    const raw = readContextoRawFromStorage();
-    if (!raw) return { asignatura: "", bloqueInicio: "", contextoUpdatedAt: "" };
-
-    const ctx = safeParseJSON(raw, null);
-    if (!ctx || typeof ctx !== "object") {
-      return { asignatura: "", bloqueInicio: "", contextoUpdatedAt: "" };
-    }
-
-    // tolerancia de nombres (por si una versión guardó otras llaves)
-    const asignatura =
-      (typeof ctx.asignatura === "string" && ctx.asignatura.trim()) ||
-      (typeof ctx.contextoClase === "string" && ctx.contextoClase.trim()) ||
-      "";
-
-    const bloqueRaw =
-      ctx.bloque ??
-      ctx.bloqueInicio ??
-      ctx.horaClaseInicio ??
-      ctx.bloqueHorario ??
-      "";
-
-    const bloqueInicio = String(bloqueRaw || "").trim();
-    const contextoUpdatedAt = typeof ctx.updatedAt === "string" ? ctx.updatedAt : "";
-
-    return { asignatura, bloqueInicio, contextoUpdatedAt };
-  }
-
-  function getContextoSesion() {
-    const ui = readContextoFromUI();
-    const st = readContextoFromStorage();
-
-    const asignatura = (ui?.asignatura || st.asignatura || "").trim();
-    const bloqueInicio = String(ui?.bloqueInicio || st.bloqueInicio || "").trim();
-    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
-    const contextoUpdatedAt = st.contextoUpdatedAt || "";
-
-    return { asignatura, bloqueInicio, horaInicioBloque, contextoUpdatedAt };
-  }
-
-  function refreshCtxT0Label() {
-    if (!ctxT0LabelEl) return;
-    const c = getContextoSesion();
-    if (!c.horaInicioBloque) {
-      ctxT0LabelEl.textContent = "T0 -";
-      return;
-    }
-    // Mostramos “T0 - 7:00 a.m.” (simple, sin depender de i18n complejo)
-    const [hh, mm] = c.horaInicioBloque.split(":").map(Number);
-    const h12 = ((hh + 11) % 12) + 1;
-    const ampm = hh >= 12 ? "p.m." : "a.m.";
-    ctxT0LabelEl.textContent = `T0 - ${h12}:${String(mm).padStart(2, "0")} ${ampm}`;
-  }
-
-  function onContextoChange() {
-    const c = getContextoSesion();
-    // persistimos (aunque venga de UI) para continuidad offline
-    persistContextoToStorage({
-      asignatura: c.asignatura,
-      bloque: c.bloqueInicio,
-      updatedAt: new Date().toISOString(),
-    });
-    refreshCtxT0Label();
-  }
-
-  // Si existen selectores, los escuchamos (no rompe si no existen)
-  if (ctxAsignaturaEl) ctxAsignaturaEl.addEventListener("change", onContextoChange);
-  if (ctxBloqueEl) ctxBloqueEl.addEventListener("change", onContextoChange);
-  refreshCtxT0Label();
-  // === /CONTEXTO ===
 
   // === Google Sheets Sync ===
   const SHEETS_WEBAPP_URL =
@@ -229,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "III.3 Agresión verbal/moral grave",
       "III.4 Sabotaje/protesta violenta",
       "III.5 Injuria/calumnia/publicación deshonrosa",
-      "III.6 Portar armas/objetos peligrosos",
+      "III.6 Portar/consumir cigarrillo, vaper o SPA",
       "III.7 Atentar contra salud/integridad",
       "III.8 Fraude/copia/plagio/falsificación",
       "III.9 Plagio/derechos de autor",
@@ -241,6 +124,15 @@ document.addEventListener("DOMContentLoaded", () => {
       "III.15 Publicar mensajes/fotos/videos sin permiso",
     ],
   };
+
+  function safeParseJSON(raw, fallback) {
+    try {
+      const v = JSON.parse(raw);
+      return v ?? fallback;
+    } catch {
+      return fallback;
+    }
+  }
 
   function norm(s) {
     return String(s || "").trim().toLowerCase();
@@ -277,6 +169,32 @@ document.addEventListener("DOMContentLoaded", () => {
     return merged;
   }
 
+  // === CONTEXTO: lectura e inyección ===
+  function getContextoSesion() {
+    const raw = localStorage.getItem(KEY_CTX);
+    const ctx = raw ? safeParseJSON(raw, null) : null;
+
+    const asignatura =
+      ctx && typeof ctx.asignatura === "string" ? ctx.asignatura.trim() : "";
+    const bloqueInicio =
+      ctx && typeof ctx.bloque === "string" ? ctx.bloque.trim() : "";
+    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
+    const contextoUpdatedAt =
+      ctx && typeof ctx.updatedAt === "string" ? ctx.updatedAt : "";
+
+    return { asignatura, bloqueInicio, horaInicioBloque, contextoUpdatedAt };
+  }
+
+  function inyectarContextoEnRegistro(reg) {
+    const c = getContextoSesion();
+    reg.asignatura = c.asignatura || "-";
+    reg.bloqueInicio = c.bloqueInicio || "";
+    reg.horaInicioBloque = c.horaInicioBloque || "";
+    reg.contextoUpdatedAt = c.contextoUpdatedAt || "";
+    return reg;
+  }
+  // === /CONTEXTO ===
+
   function getRegistros() {
     try {
       const raw = localStorage.getItem(KEY);
@@ -298,9 +216,9 @@ document.addEventListener("DOMContentLoaded", () => {
         })(),
         falta: r.falta || "",
         obs: r.obs || "",
-        syncedAt: r.syncedAt || "",
+        syncedAt: r.syncedAt || "", // sync marker
 
-        // Contexto (tolerante)
+        // === CONTEXTO (compatible con registros viejos) ===
         asignatura: r.asignatura || "",
         bloqueInicio: r.bloqueInicio || "",
         horaInicioBloque: r.horaInicioBloque || "",
@@ -506,8 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportedAt = new Date().toISOString();
     const deviceId = getDeviceId();
 
-    // ✅ Enviamos el payload original + contexto al final (claves extra NO rompen el JSON).
-    // Para que el Sheet muestre columnas, el Apps Script debe escribirlas.
+    // ⚠️ Regla de oro: NO se toca el payload del sync en este paso.
     const records = pendingSync.map((r) => ({
       uid: makeUid(r),
       timestamp: r.timestamp || "",
@@ -520,11 +437,6 @@ document.addEventListener("DOMContentLoaded", () => {
       nivel: r.nivel || "",
       falta: r.falta || "",
       obs: r.obs || "",
-      // Contexto
-      asignatura: r.asignatura || "",
-      bloqueInicio: r.bloqueInicio || "",
-      horaInicioBloque: r.horaInicioBloque || "",
-      contextoUpdatedAt: r.contextoUpdatedAt || "",
     }));
 
     // UI lock
@@ -555,6 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(out && out.error ? out.error : "No se pudo confirmar respuesta de Google");
       }
 
+      // Confirmado OK: ofrecer borrar lo enviado
       const uids = new Set(records.map((x) => x.uid));
       const enviados = pendingSync.length;
 
@@ -574,7 +487,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const syncedAt = new Date().toISOString();
         const updated = all.map((r) => {
           const uid = makeUid(r);
-          if (!r.syncedAt && uids.has(uid)) return { ...r, syncedAt }; // ✅ FIX
+          if (!r.syncedAt && uids.has(uid)) return { ...r, syncedAt };
           return r;
         });
         setRegistros(updated);
@@ -623,10 +536,6 @@ document.addEventListener("DOMContentLoaded", () => {
           cancelScanBtn.style.display = "none";
 
           const a = new Date();
-
-          // ✅ Snapshot de contexto EN EL MOMENTO DEL ESCANEO
-          const ctxSnap = getContextoSesion();
-
           pending = {
             codigo: codigoQR,
             fecha: a.toLocaleDateString(),
@@ -640,13 +549,14 @@ document.addEventListener("DOMContentLoaded", () => {
             obs: "",
             syncedAt: "",
 
-            // Contexto (snapshot)
-            asignatura: ctxSnap.asignatura ? ctxSnap.asignatura : "-",
-            bloqueInicio: ctxSnap.bloqueInicio || "",
-            horaInicioBloque: ctxSnap.horaInicioBloque || "",
-            contextoUpdatedAt: ctxSnap.contextoUpdatedAt || "",
-            _ctxSnapshot: ctxSnap, // interno
+            // CONTEXTO (se inyecta al escanear)
+            asignatura: "",
+            bloqueInicio: "",
+            horaInicioBloque: "",
+            contextoUpdatedAt: "",
           };
+
+          inyectarContextoEnRegistro(pending);
 
           codigoActual.textContent = `Código: ${codigoQR}`;
           horaActual.textContent = `Hora: ${pending.fecha} • ${pending.hora}`;
@@ -779,16 +689,10 @@ document.addEventListener("DOMContentLoaded", () => {
       pending.falta = "";
     }
 
-    // ✅ Contexto: usamos snapshot; si por alguna razón vino vacío, re-leemos.
-    const snap = pending._ctxSnapshot || null;
-    const ctx = snap && (snap.asignatura || snap.bloqueInicio) ? snap : getContextoSesion();
-    pending.asignatura = ctx.asignatura ? ctx.asignatura : "-";
-    pending.bloqueInicio = ctx.bloqueInicio || "";
-    pending.horaInicioBloque = ctx.horaInicioBloque || "";
-    pending.contextoUpdatedAt = ctx.contextoUpdatedAt || "";
-
-    // limpiamos campo interno
-    delete pending._ctxSnapshot;
+    // Si por cualquier razón quedó vacío, re-inyecta (defensivo)
+    if (!pending.asignatura || pending.asignatura === "-" || !pending.bloqueInicio) {
+      inyectarContextoEnRegistro(pending);
+    }
 
     addRegistro(pending);
     setNotice(`<strong>Guardado.</strong> Puedes escanear el siguiente QR.`);
@@ -800,7 +704,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function exportarCSV() {
     const arr = getRegistros();
-
     const header = [
       "timestamp",
       "fechaISO",
@@ -813,15 +716,13 @@ document.addEventListener("DOMContentLoaded", () => {
       "falta",
       "observacion",
       "syncedAt",
-      // Contexto
+      // === CONTEXTO (al final) ===
       "asignatura",
       "bloqueInicio",
       "horaInicioBloque",
       "contextoUpdatedAt",
     ];
-
     const rows = [toCSVRow(header)];
-
     for (const r of arr.slice().reverse()) {
       rows.push(
         toCSVRow([
@@ -836,7 +737,7 @@ document.addEventListener("DOMContentLoaded", () => {
           r.falta || "",
           r.obs || "",
           r.syncedAt || "",
-          // Contexto
+          // CONTEXTO
           r.asignatura || "",
           r.bloqueInicio || "",
           r.horaInicioBloque || "",
@@ -844,17 +745,16 @@ document.addEventListener("DOMContentLoaded", () => {
         ])
       );
     }
-
     const now = new Date().toISOString().slice(0, 10);
     downloadText(`registros_qr_${now}.csv`, rows.join("\n"));
   }
 
   function renderRegistros() {
     const arr = getRegistros();
-    if (totalReg) totalReg.textContent = String(arr.length);
+    totalReg.textContent = String(arr.length);
 
     if (!arr.length) {
-      if (historial) historial.innerHTML = `<div class="empty">Aún no hay registros.</div>`;
+      historial.innerHTML = `<div class="empty">Aún no hay registros.</div>`;
       return;
     }
 
@@ -862,9 +762,8 @@ document.addEventListener("DOMContentLoaded", () => {
       .slice(0, 200)
       .map((r) => {
         const chips = [];
-        chips.push(`<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`);
 
-        // Chips de contexto
+        // === CONTEXTO (primero) ===
         if (r.asignatura && r.asignatura !== "-") {
           chips.push(`<span class="chip">${escapeHtml(r.asignatura)}</span>`);
         }
@@ -875,9 +774,16 @@ document.addEventListener("DOMContentLoaded", () => {
           chips.push(`<span class="chip">T0: ${escapeHtml(r.horaInicioBloque)}</span>`);
         }
 
+        // === TIPO ===
+        chips.push(
+          `<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`
+        );
+
         if ((r.tipo === "INASISTENCIA" || r.tipo === "TARDE") && r.excusa) {
           chips.push(
-            `<span class="chip">${r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"}</span>`
+            `<span class="chip">${
+              r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"
+            }</span>`
           );
         }
 
@@ -908,7 +814,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .join("");
 
-    if (historial) historial.innerHTML = html;
+    historial.innerHTML = html;
   }
 
   // --- Bindings ---
