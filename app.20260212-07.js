@@ -40,7 +40,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Storage ---
   const KEY = "registros_qr_v1";
+  // === PASO 3: Contexto inyectado en registro (LOCAL + CSV) ===
+  const KEY_CTX = "qr_contexto_sesion_v1";
+  const BLOQUE_T0_24H = {
+    "1": "07:00:00",
+    "2": "07:54:00",
+    "3": "08:48:00",
+    "4": "09:52:00",
+    "5": "10:46:00",
+    "6": "11:40:00",
+    "7": "13:14:00",
+    "8": "14:08:00",
+  };
 
+  function getContextoSesion() {
+    const raw = localStorage.getItem(KEY_CTX);
+    const ctx = raw ? safeParseJSON(raw, null) : null;
+
+    const asignatura = ctx && typeof ctx.asignatura === "string" ? ctx.asignatura.trim() : "";
+    const bloqueInicio = ctx && typeof ctx.bloque === "string" ? ctx.bloque.trim() : "";
+    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
+    const contextoUpdatedAt = ctx && typeof ctx.updatedAt === "string" ? ctx.updatedAt : "";
+
+    return { asignatura, bloqueInicio, horaInicioBloque, contextoUpdatedAt };
+  }
+  // === /PASO 3 ===
   // === Google Sheets Sync ===
   const SHEETS_WEBAPP_URL =
     "https://script.google.com/macros/s/AKfycbzbbTA4VFxI8hv2qNqZWaBgMOwrc22lmf1-MSv7Y5uf_gey96Fxbz_HJC2vP-7TO6s/exec";
@@ -695,7 +719,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ✅ PASO 3: inyectar contexto activo al guardar (no rompe si no hay contexto)
     inyectarContextoEnRegistro(pending);
-
+    // ✅ PASO 3: Inyectar contexto activo (tolerante: no rompe si está vacío)
+    const ctx = getContextoSesion();
+    pending.asignatura = ctx.asignatura || "-";
+    pending.bloqueInicio = ctx.bloqueInicio || "";
+    pending.horaInicioBloque = ctx.horaInicioBloque || "";
+    pending.contextoUpdatedAt = ctx.contextoUpdatedAt || "";
     addRegistro(pending);
     setNotice(`<strong>Guardado.</strong> Puedes escanear el siguiente QR.`);
     pending = null;
