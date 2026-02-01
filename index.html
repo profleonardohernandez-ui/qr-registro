@@ -8,27 +8,36 @@
 
   <style>
     :root{
-      --bg:#0b1220; --text:#e8eefc; --muted:#a9b7d6;
-      --line:rgba(255,255,255,.08); --shadow:0 10px 30px rgba(0,0,0,.35);
-      --radius:16px; --primary:#4f8cff; --danger:#ff4f64;
+      --bg:#0b1220;
+      --card:#0f1a2e;
+      --text:#e8eefc;
+      --muted:#a9b7d6;
+      --line:rgba(255,255,255,.08);
+      --primary:#4f8cff;
+      --danger:#ff4f64;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background: radial-gradient(1200px 600px at 20% -10%, rgba(79,140,255,.25), transparent 55%),
-                  radial-gradient(900px 500px at 90% 0%, rgba(61,220,151,.18), transparent 55%),
-                  var(--bg);
-      color:var(--text);
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
     }
     .wrap{max-width:980px;margin:0 auto;padding:18px 14px 48px;}
     header{display:flex;justify-content:space-between;gap:14px;margin-bottom:14px;}
     h1{margin:0;font-size:20px}
     .small{font-size:12px;color:var(--muted);line-height:1.25}
+
     .grid{display:grid;grid-template-columns:1fr;gap:12px;}
     @media (min-width: 820px){ .grid{grid-template-columns:1.15fr .85fr;} }
+
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       padding:14px;
     }
     .card-title{font-weight:800;margin-bottom:8px}
@@ -36,29 +45,63 @@
     .field{display:flex;flex-direction:column;gap:6px;min-width:200px;flex:1}
     label{font-size:12px;color:var(--muted)}
     .input-std{
-      width:100%; padding:10px 12px; background: rgba(0,0,0,.25);
-      border:1px solid var(--line); border-radius:12px; color:var(--text); outline:none;
+      width:100%;
+      padding:10px 12px;
+      background: rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      border-radius:12px;
+      color:var(--text);
+      outline:none;
     }
     .btn{
-      padding:10px 12px; border-radius:12px; border:1px solid var(--line);
-      background: rgba(255,255,255,.06); color: var(--text); cursor:pointer; font-weight:700;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+      font-weight:700;
     }
     .btn-primary{background: linear-gradient(180deg, rgba(79,140,255,.95), rgba(58,115,255,.95));}
     .btn-danger{background: rgba(255,79,100,.14); border-color: rgba(255,79,100,.45);}
     .btn-ghost{background: transparent;}
     .sep{height:1px;background:var(--line);margin:12px 0}
-    .notice{
-      margin-top:10px; padding:10px 12px; border-radius:12px; border:1px solid var(--line);
-      background: rgba(0,0,0,.25); color: var(--muted); min-height:42px;
-    }
+
     #qr-reader{
-      width:100%; min-height:220px; border-radius:14px;
-      border:1px dashed rgba(255,255,255,.15); background: rgba(0,0,0,.18);
-      display:flex; align-items:center; justify-content:center; color: rgba(255,255,255,.55);
+      width:100%;
+      min-height:240px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.15);
+      background: rgba(0,0,0,.18);
+      display:none; /* el JS lo muestra al escanear */
+      align-items:center;
+      justify-content:center;
+      color: rgba(255,255,255,.55);
       overflow:hidden;
     }
+    .notice{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color: var(--muted);
+      min-height:42px;
+    }
+
+    /* Historial básico */
     .hist{max-height:320px; overflow:auto; border-top:1px solid var(--line); margin-top:10px; padding-top:10px;}
     .empty{color:var(--muted);padding:10px 0}
+    .item{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+    .item-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px}
+    .tipo-tarde{border-color: rgba(255,204,102,.6)}
+    .tipo-convivencia{border-color: rgba(255,79,100,.6)}
+    .tipo-inasistencia{border-color: rgba(255,255,255,.18)}
+    .when{color:var(--muted);font-size:12px}
+    .code{font-weight:800}
+    .obs{margin-top:6px;color:var(--muted);font-size:12px}
   </style>
 </head>
 
@@ -67,7 +110,7 @@
     <header>
       <div>
         <h1>QR Profe — Registro</h1>
-        <div class="small">Captura rápida en móvil (offline) · Datos consistentes para informes</div>
+        <div class="small">Versión estable (sin contexto)</div>
       </div>
     </header>
 
@@ -75,53 +118,6 @@
 
       <!-- IZQUIERDA -->
       <div>
-
-        <!-- CONTEXTO (Paso 1) -->
-        <section class="card" style="border-left:4px solid #3b82f6;">
-          <div class="row" style="justify-content:space-between;align-items:flex-start;">
-            <div>
-              <div class="card-title">Contexto de sesión</div>
-              <div id="contextoActivo" class="small">Contexto activo: (sin configurar)</div>
-            </div>
-            <button id="btnContextoToggle" class="btn btn-ghost" type="button">🎛 Contexto</button>
-          </div>
-
-          <div id="panelContexto" class="row" style="margin-top:12px;" hidden>
-            <div class="field">
-              <label for="contextoAsignatura"><b>Asignatura / Grupo</b></label>
-              <select id="contextoAsignatura" class="input-std">
-                <option value="">-- Seleccionar --</option>
-                <option value="Economía 11°A">Economía 11°A</option>
-                <option value="Economía 11°B">Economía 11°B</option>
-                <option value="Filosofía 11°A">Filosofía 11°A</option>
-                <option value="Filosofía 11°B">Filosofía 11°B</option>
-                <option value="Economía 10°A">Economía 10°A</option>
-                <option value="Filosofía 10°A">Filosofía 10°A</option>
-                <option value="C. Sociales 6°A">C. Sociales 6°A</option>
-                <option value="C. Sociales 6°B">C. Sociales 6°B</option>
-                <option value="C. Sociales POS">C. Sociales POS</option>
-                <option value="EVENTO">EVENTO</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="contextoBloque"><b>Hora-clase de inicio</b></label>
-              <select id="contextoBloque" class="input-std">
-                <option value="">-- Seleccionar (1° a 8°) --</option>
-                <option value="1">1°</option><option value="2">2°</option>
-                <option value="3">3°</option><option value="4">4°</option>
-                <option value="5">5°</option><option value="6">6°</option>
-                <option value="7">7°</option><option value="8">8°</option>
-              </select>
-              <div id="contextoT0Hint" class="small" style="margin-top:6px;">Hora base (T0): —</div>
-            </div>
-
-            <div class="row" style="align-items:flex-end;">
-              <button id="btnContextoGuardar" class="btn btn-primary" type="button">✅ Alistar</button>
-              <button id="btnContextoLimpiar" class="btn btn-ghost" type="button">🧹 Limpiar</button>
-            </div>
-          </div>
-        </section>
 
         <!-- ESCÁNER -->
         <section class="card">
@@ -131,8 +127,8 @@
           <div id="qr-reader">Área del escáner</div>
 
           <div class="row" style="margin-top:12px;">
-            <button id="scanBtn" class="btn btn-primary" type="button">▶ Iniciar escáner</button>
-            <button id="cancelScanBtn" class="btn btn-ghost" type="button" style="display:none;">⏸ Detener</button>
+            <button id="scanBtn" class="btn btn-primary" type="button">▶ Escanear QR</button>
+            <button id="cancelScanBtn" class="btn btn-ghost" type="button" style="display:none;">⏸ Cancelar</button>
           </div>
 
           <div id="notice" class="notice">Listo.</div>
@@ -163,7 +159,7 @@
               </select>
             </div>
 
-            <div id="wrapExcusa" class="field" style="margin-top:10px;">
+            <div id="wrapExcusa" class="field" style="margin-top:10px; display:none;">
               <label for="excusa"><b>Excusa</b></label>
               <select id="excusa" class="input-std">
                 <option value="SIN_EXCUSA">SIN_EXCUSA</option>
@@ -171,7 +167,7 @@
               </select>
             </div>
 
-            <div id="wrapNivel" class="field" style="margin-top:10px;">
+            <div id="wrapNivel" class="field" style="margin-top:10px; display:none;">
               <label for="nivel"><b>Nivel (Convivencia)</b></label>
               <select id="nivel" class="input-std">
                 <option value="TIPO_I">TIPO_I</option>
@@ -180,7 +176,7 @@
               </select>
             </div>
 
-            <div id="wrapFalta" class="field" style="margin-top:10px;">
+            <div id="wrapFalta" class="field" style="margin-top:10px; display:none;">
               <label for="falta"><b>Falta</b></label>
               <select id="falta" class="input-std"></select>
             </div>
@@ -190,7 +186,7 @@
               <input id="faltaOtra" class="input-std" type="text" placeholder="Escribe la nueva falta" />
             </div>
 
-            <div id="wrapObsTipo" class="field" style="margin-top:10px;">
+            <div id="wrapObsTipo" class="field" style="margin-top:10px; display:none;">
               <label for="obsTipo"><b>Observación tipo (Tarde)</b></label>
               <select id="obsTipo" class="input-std"></select>
             </div>
@@ -206,20 +202,19 @@
           </form>
         </section>
 
-        <!-- EXPORTACIÓN -->
+        <!-- EXPORTACIÓN / SYNC -->
         <section class="card">
           <div class="card-title">Exportación</div>
-          <div class="small" style="margin-bottom:10px;">Exporta los registros para análisis.</div>
+          <div class="small" style="margin-bottom:10px;">Exporta o sincroniza los registros.</div>
 
           <div class="row">
             <button id="exportarBtn" class="btn" type="button">⬇ Exportar CSV</button>
             <button id="syncBtn" class="btn btn-ghost" type="button">☁️ Sincronizar</button>
             <button id="limpiarBtn" class="btn btn-danger" type="button">🗑 Borrar (local)</button>
           </div>
-          <div class="small" style="margin-top:10px;">*Borrar (local) solo elimina el almacenamiento del dispositivo.</div>
         </section>
 
-        <!-- HISTORIAL (obligatorio para tu app.js) -->
+        <!-- HISTORIAL (obligatorio para este app.js) -->
         <section class="card">
           <div class="row" style="justify-content:space-between;align-items:center;">
             <div class="card-title">Historial</div>
@@ -234,14 +229,10 @@
     </div>
   </div>
 
-  <!-- ✅ CÁMARA/QR (elige UNA opción) -->
-  <!-- Opción A: local (recomendada si ya la tienes) -->
+  <!-- ✅ Librería QR (local) -->
   <script src="./html5-qrcode.min.js"></script>
 
-  <!-- Opción B: CDN (si no tienes el archivo local) -->
-  <!-- <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script> -->
-
-  <!-- Tu app -->
-  <script src="app.js"></script>
+  <!-- ✅ Tu JS estable -->
+  <script src="./app.20260212-07.js"></script>
 </body>
 </html>
