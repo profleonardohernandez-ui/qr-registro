@@ -114,15 +114,16 @@
     <header>
       <div>
         <h1>QR Profe — Registro</h1>
-        <div class="small">Versión estable + Paso 1 (UI Contexto)</div>
+        <div class="small">Versión estable + Contexto (Paso 2 con T0)</div>
       </div>
     </header>
 
-    <!-- ✅ PASO 1: Panel Contexto (solo UI; no afecta registros) -->
+    <!-- ✅ Contexto de sesión (UI + Persistencia) -->
     <section class="card context-card">
       <div class="row" style="justify-content:space-between;align-items:flex-start;">
         <div>
           <div class="card-title">Contexto de sesión</div>
+          <div id="contextoT0Hint" class="small">T0: —</div>
           <div id="contextoActivo" class="small">Contexto activo: (sin configurar)</div>
         </div>
         <button id="btnContextoToggle" class="btn btn-ghost" type="button">🎛 Contexto</button>
@@ -155,7 +156,6 @@
             <option value="5">5°</option><option value="6">6°</option>
             <option value="7">7°</option><option value="8">8°</option>
           </select>
-          <div id="contextoT0Hint" class="small" style="margin-top:6px;">T0: —</div>
         </div>
 
         <div class="row" style="align-items:flex-end;">
@@ -278,9 +278,9 @@
   <!-- ✅ Tu JS estable (sin tocar) -->
   <script src="./app.20260212-07.js"></script>
 
-  <!-- ✅ Paso 1: script UI de contexto (NO toca registros, NO toca scanner) -->
+  <!-- ✅ Contexto persistente + T0 (NO toca registros ni scanner) -->
   <script>
-    (function(){
+    (function () {
       const toggleBtn = document.getElementById("btnContextoToggle");
       const panel = document.getElementById("panelContexto");
       const selAsig = document.getElementById("contextoAsignatura");
@@ -290,34 +290,114 @@
       const activo = document.getElementById("contextoActivo");
       const t0Hint = document.getElementById("contextoT0Hint");
 
+      // Null-checks: si falta algo, salimos sin romper la app.
       if (!toggleBtn || !panel || !selAsig || !selBloq || !btnOk || !btnClr || !activo || !t0Hint) return;
 
-      function setActiveText(a, b){
-        const asig = a || "(sin asignatura)";
-        const bloq = b || "(sin bloque)";
-        activo.textContent = `Contexto activo: ${asig} · Inicio: ${bloq}`;
+      // ✅ KEY independiente — no colisiona con registros_qr_v1
+      const KEY_CTX = "qr_contexto_sesion_v1";
+
+      // ✅ Mapeo Bloque -> Hora de inicio (T0)
+      const BLOQUE_T0_24H = {
+        "1": "07:00",
+        "2": "07:54",
+        "3": "08:48",
+        "4": "09:52",
+        "5": "10:46",
+        "6": "11:40",
+        "7": "13:14",
+        "8": "14:08",
+      };
+
+      function safeParse(raw, fallback) {
+        try { return JSON.parse(raw) ?? fallback; } catch { return fallback; }
       }
 
+      function toAmPm(hhmm) {
+        if (!hhmm) return "";
+        const [hhStr, mmStr] = hhmm.split(":");
+        const hh = Number(hhStr);
+        const mm = Number(mmStr);
+        if (!Number.isFinite(hh) || !Number.isFinite(mm)) return "";
+        const ampm = hh >= 12 ? "p.m." : "a.m.";
+        const h12 = ((hh + 11) % 12) + 1;
+        return `${h12}:${String(mm).padStart(2, "0")} ${ampm}`;
+      }
+
+      function getT0TextByBloque(bloque) {
+        const hhmm = BLOQUE_T0_24H[String(bloque || "").trim()] || "";
+        return hhmm ? toAmPm(hhmm) : "";
+      }
+
+      function refreshT0Hint() {
+        const b = (selBloq.value || "").trim();
+        const t0 = getT0TextByBloque(b);
+        t0Hint.textContent = t0 ? `T0: ${t0}` : "T0: —";
+      }
+
+      function setActiveText(ctx) {
+        const asig = (ctx && ctx.asignatura) ? ctx.asignatura : "(sin configurar)";
+        const bloq = (ctx && ctx.bloque) ? `${ctx.bloque}°` : "(sin configurar)";
+        const when = (ctx && ctx.updatedAt) ? ` · ${new Date(ctx.updatedAt).toLocaleString()}` : "";
+        activo.textContent = `Contexto activo: ${asig} · Inicio: ${bloq}${when}`;
+      }
+
+      function getCtxFromUI() {
+        const asignatura = (selAsig.value || "").trim();
+        const bloque = (selBloq.value || "").trim();
+        return { asignatura, bloque, updatedAt: new Date().toISOString() };
+      }
+
+      function loadCtx() {
+        const raw = localStorage.getItem(KEY_CTX);
+        const ctx = raw ? safeParse(raw, null) : null;
+
+        if (ctx && typeof ctx === "object") {
+          if (typeof ctx.asignatura === "string") selAsig.value = ctx.asignatura;
+          if (typeof ctx.bloque === "string") selBloq.value = ctx.bloque;
+          setActiveText(ctx);
+        } else {
+          setActiveText(null);
+        }
+
+        refreshT0Hint();
+      }
+
+      function saveCtx(ctx) {
+        localStorage.setItem(KEY_CTX, JSON.stringify(ctx));
+        setActiveText(ctx);
+        refreshT0Hint();
+      }
+
+      function clearCtx() {
+        localStorage.removeItem(KEY_CTX);
+        selAsig.value = "";
+        selBloq.value = "";
+        setActiveText(null);
+        refreshT0Hint();
+      }
+
+      // UI: abrir/cerrar panel
       toggleBtn.addEventListener("click", () => {
         panel.hidden = !panel.hidden;
       });
 
+      // Cada vez que cambie el bloque, actualiza T0
+      selBloq.addEventListener("change", refreshT0Hint);
+
+      // ✅ Alistar = guardar en localStorage + cerrar panel
       btnOk.addEventListener("click", () => {
-        setActiveText(selAsig.value, selBloq.value ? (selBloq.value + "°") : "");
-        t0Hint.textContent = "T0: —";
-        // Nota: Paso 1 NO guarda ni inyecta; solo UI.
+        const ctx = getCtxFromUI();
+        saveCtx(ctx);
         panel.hidden = true;
       });
 
+      // ✅ Limpiar = borrar localStorage
       btnClr.addEventListener("click", () => {
-        selAsig.value = "";
-        selBloq.value = "";
-        setActiveText("", "");
-        t0Hint.textContent = "T0: —";
+        clearCtx();
       });
 
-      // Estado inicial
-      setActiveText("", "");
+      // Init: cargar contexto persistido
+      loadCtx();
     })();
   </script>
 </body>
