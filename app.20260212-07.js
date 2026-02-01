@@ -411,6 +411,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportedAt = new Date().toISOString();
     const deviceId = getDeviceId();
 
+    // ✅ PASO 4: incluir CONTEXTO en el payload (sin tocar nada más)
     const records = pendingSync.map((r) => ({
       uid: makeUid(r),
       timestamp: r.timestamp || "",
@@ -423,6 +424,13 @@ document.addEventListener("DOMContentLoaded", () => {
       nivel: r.nivel || "",
       falta: r.falta || "",
       obs: r.obs || "",
+
+      // --- CONTEXTO ---
+      asignatura: r.asignatura || "",
+      bloqueInicio: r.bloqueInicio || "",
+      bloqueLabel: r.bloqueLabel || "",
+      horaInicioBloque: r.horaInicioBloque || "",
+      contextoUpdatedAt: r.contextoUpdatedAt || "",
     }));
 
     // UI lock
