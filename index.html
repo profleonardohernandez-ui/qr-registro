@@ -2,430 +2,183 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>QR Profe - Registro</title>
-
-  <style>
-    :root{
-      --bg:#0b1220;
-      --card:#0f1a2e;
-      --card2:#101f38;
-      --text:#e8eefc;
-      --muted:#a9b7d6;
-      --line:rgba(255,255,255,.08);
-      --primary:#4f8cff;
-      --primary2:#3a73ff;
-      --danger:#ff4f64;
-      --warn:#ffcc66;
-      --ok:#3ddc97;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 18px;
-      --radius2: 24px;
-    }
-
-    /* Evita “font inflation”/cambios extraños de tamaño en móviles/PWA */
-    html{
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
-
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 800px at 20% -20%, rgba(79,140,255,.22), transparent 60%),
-                  radial-gradient(900px 700px at 120% 20%, rgba(61,220,151,.12), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-      min-height:100vh;
-    }
-
-    header{
-      padding:18px 18px 8px;
-      max-width:1100px;
-      margin:0 auto;
-    }
-    header h1{
-      margin:0;
-      font-size:22px;
-      letter-spacing:.2px;
-      white-space: nowrap; /* Mantener en una sola línea */
-    }
-    header .sub{
-      margin-top:4px;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    @media (max-width: 420px){
-      header h1{
-        font-size:20px; /* ayuda en pantallas pequeñas para que no quiebre */
-      }
-    }
-
-    .wrap{
-      max-width:1100px;
-      margin:0 auto;
-      padding:12px 18px 40px;
-      display:grid;
-      gap:14px;
-      grid-template-columns: 1.25fr .9fr;
-    }
-    @media (max-width: 960px){
-      .wrap{ grid-template-columns: 1fr; }
-    }
-
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid var(--line);
-      border-radius: var(--radius2);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .card-inner{ padding:18px; }
-    .card-title{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      font-weight:800;
-      letter-spacing:.2px;
-      margin:0 0 10px;
-      font-size:16px;
-    }
-    .hint{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
-      margin:0 0 14px;
-    }
-
-    .row{ display:flex; gap:12px; flex-wrap:wrap; }
-    .field{
-      display:grid;
-      gap:6px;
-      min-width:220px;
-      flex:1;
-    }
-    label{
-      color:var(--muted);
-      font-size:12px;
-      letter-spacing:.2px;
-    }
-    select,input,textarea{
-      width:100%;
-      font-size:16px;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.25);
-      color: var(--text);
-      outline:none;
-    }
-    textarea{ min-height:88px; resize:vertical; }
-
-    .btns{ display:flex; gap:10px; flex-wrap:wrap; }
-    button{
-      border:0;
-      border-radius:14px;
-      padding:12px 14px;
-      font-size:15px;
-      cursor:pointer;
-      color:#fff;
-      background: rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.10);
-    }
-    button.primary{
-      background: linear-gradient(180deg, var(--primary), var(--primary2));
-      border-color: rgba(255,255,255,.12);
-      font-weight:700;
-    }
-    button.danger{
-      background: rgba(255,79,100,.20);
-      border-color: rgba(255,79,100,.35);
-      color:#ffd7dc;
-      font-weight:700;
-    }
-    button:disabled{ opacity:.6; cursor:not-allowed; }
-
-    .pill{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.22);
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-    }
-
-    .notice{
-      margin-top:10px;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px dashed rgba(255,255,255,.14);
-      background: rgba(0,0,0,.20);
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.3;
-    }
-
-    /* Defensivo: evita “saltos” si el navegador intenta inflar tipografía */
-    #notice{
-      font-size:13px;
-      line-height:1.3;
-    }
-    #notice strong{ font-size:inherit; }
-
-    /* Historial */
-    .hist{
-      display:grid;
-      gap:10px;
-      margin-top:10px;
-    }
-    .item{
-      padding:12px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-    }
-    .item-top{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      margin-bottom:8px;
-    }
-    .chips{ display:flex; gap:6px; flex-wrap:wrap; }
-    .chip{
-      padding:5px 9px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      font-size:12px;
-      color:#eaf0ff;
-    }
-    .tipo-inasistencia{ border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.12); }
-    .tipo-tarde{ border-color: rgba(79,140,255,.35); background: rgba(79,140,255,.14); }
-    .tipo-convivencia{ border-color: rgba(255,79,100,.35); background: rgba(255,79,100,.12); }
-    .when{ color:var(--muted); font-size:12px; white-space:nowrap; }
-    .code{ font-weight:800; letter-spacing:.2px; font-size:14px; margin-bottom:4px; }
-    .obs{ color:var(--muted); font-size:13px; }
-
-    /* Mensaje vacío: tamaño estable */
-    .empty{
-      color: var(--muted);
-      font-size: 13px;
-      padding: 8px 4px;
-    }
-
-    /* Scanner area placeholder */
-    #qr-reader{
-      width:100%;
-      min-height:240px;
-      border-radius:18px;
-      border:1px dashed rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      display:none;
-      overflow:hidden;
-    }
-
-    .two-col{
-      display:grid;
-      gap:14px;
-      grid-template-columns: 1fr;
-    }
-
-    .rule{
-      display:flex;
-      justify-content:flex-end;
-      padding:0 18px 0;
-      max-width:1100px;
-      margin:0 auto;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./style.css" />
+  <title>QR Profe — Registro</title>
 </head>
 
 <body>
-  <header>
-    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:10px;">
-      <div>
-        <h1>QR Profe - Registro</h1>
-        <div class="sub">Offline-first • Escaneo rápido • Sincronización por lote</div>
-      </div>
-      <!-- (Eliminado) pill de "Regla de oro..." -->
+  <header class="topbar">
+    <div>
+      <h1 class="brand">QR Profe — Registro</h1>
+      <div class="sub">Offline-first • Escaneo rápido • Sincronización por lote</div>
+    </div>
+    <div class="device-pill">
+      <span class="dot"></span>
+      <span id="deviceLabel">Dispositivo: —</span>
     </div>
   </header>
 
-  <div class="wrap">
-    <!-- Columna izquierda -->
-    <div class="two-col">
-      <!-- 0) Contexto -->
-      <section class="card" style="border-left:4px solid rgba(79,140,255,.9);">
-        <div class="card-inner">
-          <div class="card-title">
-            <span>0) Contexto de sesión</span>
-            <button id="btnAlistar" class="primary">✅ Alistar</button>
+  <main class="wrap">
+
+    <!-- 0) Contexto -->
+    <section class="card context-card">
+      <div class="card-title">
+        <span>0) Contexto de sesión</span>
+        <div class="btns">
+          <button id="btnAlistar" class="primary">✅ Alistar</button>
+          <button id="btnBorrarCtx">🧹 Borrar</button>
+        </div>
+      </div>
+
+      <div class="small" style="margin-bottom:10px;color:#a9b7d6;">
+        Elige Asignatura/Grupo y Hora-clase inicio (1–8).
+      </div>
+
+      <div class="row" style="gap:15px; flex-wrap:wrap;">
+        <div class="field" style="flex:1; min-width: 160px;">
+          <label for="contextoClase">Asignatura / Grupo</label>
+          <select id="contextoClase" class="input-std">
+            <option value="">— Seleccionar —</option>
+            <option value="Economía 11°A">Economía 11°A</option>
+            <option value="Economía 11°B">Economía 11°B</option>
+            <option value="Filosofía 11°A">Filosofía 11°A</option>
+            <option value="Filosofía 11°B">Filosofía 11°B</option>
+            <option value="Economía 10°A">Economía 10°A</option>
+            <option value="Filosofía 10°A">Filosofía 10°A</option>
+            <option value="C. Sociales 6°A">C. Sociales 6°A</option>
+            <option value="C. Sociales 6°B">C. Sociales 6°B</option>
+            <option value="C. Sociales POS">C. Sociales POS</option>
+            <option value="EVENTO">Evento / Izada Bandera</option>
+          </select>
+        </div>
+
+        <div class="field" style="flex:1; min-width: 160px;">
+          <label for="horaClaseInicio">Hora-clase inicio</label>
+          <select id="horaClaseInicio" class="input-std">
+            <option value="">— Seleccionar —</option>
+            <option value="1">1° (07:00 - 07:54)</option>
+            <option value="2">2° (07:54 - 08:48)</option>
+            <option value="3">3° (08:48 - 09:42)</option>
+            <option value="4">4° (09:52 - 10:46)</option>
+            <option value="5">5° (10:46 - 11:40)</option>
+            <option value="6">6° (12:06 - 13:00)</option>
+            <option value="7">7° (13:00 - 13:54)</option>
+            <option value="8">8° (13:54 - 14:48)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="ctx-preview" id="ctxPreview" style="margin-top:12px;">
+        <div><span class="muted">Asignatura:</span> <span id="ctxPreviewAsig">—</span></div>
+        <div><span class="muted">Inicio:</span> <span id="ctxPreviewBloq">—</span></div>
+        <div><span class="muted">T0 -</span> <span id="ctxPreviewT0">—</span></div>
+      </div>
+    </section>
+
+    <!-- 1) Escaneo -->
+    <section class="card">
+      <div class="card-title">1) Escaneo y registro</div>
+
+      <div class="btns">
+        <button id="scanBtn" class="primary">📸 Escanear QR</button>
+        <button id="cancelScanBtn" style="display:none;">⏹️ Detener</button>
+      </div>
+
+      <div id="notice" class="notice" style="margin-top:10px;">
+        <strong>Listo.</strong> Selecciona contexto (opcional) y escanea.
+      </div>
+
+      <div class="row" style="margin-top:10px; gap:10px; flex-wrap:wrap;">
+        <div class="pill" id="codigoActual">Código: —</div>
+        <div class="pill" id="horaActual">Hora: —</div>
+      </div>
+
+      <div id="qr-reader" class="qr-reader" style="display:none; margin-top:14px;"></div>
+
+      <div id="formEvento" class="form" style="display:none; margin-top:14px;">
+        <div class="row" style="gap:12px; flex-wrap:wrap;">
+          <div class="field" style="flex:1; min-width:160px;">
+            <label for="tipo">Tipo de registro</label>
+            <select id="tipo" class="input-std">
+              <option value="INASISTENCIA">INASISTENCIA</option>
+              <option value="TARDE">TARDE</option>
+              <option value="CONVIVENCIA">CONVIVENCIA</option>
+            </select>
           </div>
-          <p class="hint">
-            Elige Asignatura/Grupo y Hora-clase inicio (1–8).
-          </p>
 
-          <div class="row">
-            <div class="field">
-              <label>Asignatura / Grupo</label>
-              <select id="contextoClase">
-                <option value="">— seleccionar —</option>
-                <option value="Economía 11°A">Economía 11°A</option>
-                <option value="Economía 11°B">Economía 11°B</option>
-                <option value="Filosofía 11°A">Filosofía 11°A</option>
-                <option value="Filosofía 11°B">Filosofía 11°B</option>
-                <option value="Economía 10°A">Economía 10°A</option>
-                <option value="Filosofía 10°A">Filosofía 10°A</option>
-                <option value="C. Sociales 6°A">C. Sociales 6°A</option>
-                <option value="C. Sociales 6°B">C. Sociales 6°B</option>
-                <option value="C. Sociales POS">C. Sociales POS</option>
-                <option value="EVENTO">Evento / Izada Bandera</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Hora-clase inicio</label>
-              <select id="horaClaseInicio">
-                <option value="">— seleccionar —</option>
-                <option value="1">1° (07:00 - 07:54)</option>
-                <option value="2">2° (07:54 - 08:48)</option>
-                <option value="3">3° (08:48 - 09:42)</option>
-                <option value="4">4° (09:52 - 10:46)</option>
-                <option value="5">5° (10:46 - 11:40)</option>
-                <option value="6">6° (12:06 - 13:00)</option>
-                <option value="7">7° (13:00 - 13:54)</option>
-                <option value="8">8° (13:54 - 14:48)</option>
-              </select>
-            </div>
+          <div id="wrapExcusa" class="field" style="flex:1; min-width:160px;">
+            <label for="excusa">Excusa</label>
+            <select id="excusa" class="input-std">
+              <option value="SIN_EXCUSA">Sin excusa</option>
+              <option value="CON_EXCUSA">Con excusa</option>
+            </select>
           </div>
 
-          <div class="notice" id="ctxPreview">
-            Asignatura: <span id="ctxPreviewAsig">—</span><br/>
-            Inicio: <span id="ctxPreviewBloq">—</span><br/>
-            <strong>T0</strong> - <span id="ctxPreviewT0">—</span>
+          <div id="wrapNivel" class="field" style="flex:1; min-width:160px; display:none;">
+            <label for="nivel">Clasificación</label>
+            <select id="nivel" class="input-std">
+              <option value="TIPO_I">Tipo I</option>
+              <option value="TIPO_II">Tipo II</option>
+              <option value="TIPO_III">Tipo III</option>
+            </select>
+          </div>
+
+          <div id="wrapFalta" class="field" style="flex:1; min-width:240px; display:none;">
+            <label for="falta">Falta</label>
+            <select id="falta" class="input-std">
+              <option value="">— seleccionar —</option>
+            </select>
           </div>
         </div>
-      </section>
 
-      <!-- 1) Escaneo -->
-      <section class="card">
-        <div class="card-inner">
-          <div class="card-title">
-            <span>1) Escaneo y registro</span>
-          </div>
-
-          <div class="btns">
-            <button id="scanBtn" class="primary">📷 Escanear QR</button>
-            <button id="cancelScanBtn" style="display:none;">⏸️ Detener</button>
-          </div>
-
-          <div class="notice" id="notice">
-            Esperando lectura de QR...
-          </div>
-
-          <div style="display:flex; gap:14px; margin-top:12px; flex-wrap:wrap;">
-            <div class="pill" id="codigoActual">Código: —</div>
-            <div class="pill" id="horaActual">Hora: —</div>
-          </div>
-
-          <div id="qr-reader" style="margin-top:14px;"></div>
-
-          <!-- Form evento -->
-          <div id="formEvento" style="display:none; margin-top:14px;">
-            <div class="row">
-              <div class="field" style="min-width:160px;">
-                <label>Tipo</label>
-                <select id="tipo">
-                  <option value="INASISTENCIA">INASISTENCIA</option>
-                  <option value="TARDE">TARDE</option>
-                  <option value="CONVIVENCIA">CONVIVENCIA</option>
-                </select>
-              </div>
-
-              <div class="field" id="wrapExcusa" style="min-width:160px;">
-                <label>Excusa</label>
-                <select id="excusa">
-                  <option value="SIN_EXCUSA">SIN_EXCUSA</option>
-                  <option value="CON_EXCUSA">CON_EXCUSA</option>
-                </select>
-              </div>
-
-              <div class="field" id="wrapNivel" style="min-width:160px; display:none;">
-                <label>Clasificación</label>
-                <select id="nivel">
-                  <option value="TIPO_I">TIPO_I</option>
-                  <option value="TIPO_II">TIPO_II</option>
-                  <option value="TIPO_III">TIPO_III</option>
-                </select>
-              </div>
-
-              <div class="field" id="wrapFalta" style="min-width:220px; display:none;">
-                <label>Falta</label>
-                <select id="falta"></select>
-              </div>
-
-              <div class="field" id="wrapFaltaOtra" style="min-width:220px; display:none;">
-                <label>Otra falta (guardar nueva)</label>
-                <input id="faltaOtra" placeholder="Escribe la nueva falta..." />
-              </div>
-
-              <div class="field" id="wrapObsTipo" style="min-width:220px; display:none;">
-                <label>Observación tipo (tarde)</label>
-                <select id="obsTipo"></select>
-              </div>
-
-              <div class="field" style="min-width:260px; flex:2;">
-                <label>Observación</label>
-                <input id="obs" placeholder="Escribe una observación breve..." />
-              </div>
-            </div>
-
-            <div class="btns" style="margin-top:12px;">
-              <button id="guardarBtn" class="primary">💾 Guardar</button>
-            </div>
-          </div>
+        <div id="wrapFaltaOtra" class="field" style="display:none; margin-top:10px;">
+          <label for="faltaOtra">Otra falta (guardar nueva)</label>
+          <input id="faltaOtra" class="input-std" placeholder="Escribe la falta..." />
         </div>
-      </section>
-    </div>
 
-    <!-- Columna derecha -->
-    <div class="two-col">
-      <!-- Exportación / Acciones -->
-      <section class="card">
-        <div class="card-inner">
-          <div class="card-title">2) Historial y acciones</div>
-
-          <div class="btns">
-            <button id="syncBtn">☁️ Sincronizar a Google Sheets</button>
-            <button id="exportarBtn">⬇️ Exportar CSV</button>
-          </div>
-
-          <div class="btns" style="margin-top:10px;">
-            <button id="limpiarBtn" class="danger">🧹 Limpiar</button>
-          </div>
-
-          <div class="notice" style="margin-top:12px;">
-            Registros en dispositivo: <strong id="totalReg">0</strong>
-          </div>
-
-          <div class="hist" id="historial"></div>
+        <div id="wrapObsTipo" class="field" style="display:none; margin-top:10px;">
+          <label for="obsTipo">Observación tipo (Tarde)</label>
+          <select id="obsTipo" class="input-std">
+            <option value="">— seleccionar —</option>
+            <option value="_OTRA">Otra (escribir abajo)</option>
+          </select>
         </div>
-      </section>
-    </div>
-  </div>
 
-  <!-- Librería cámara -->
+        <div class="field" style="margin-top:10px;">
+          <label for="obs">Observación</label>
+          <input id="obs" class="input-std" placeholder="Detalle breve (opcional)..." />
+        </div>
+
+        <div class="btns" style="margin-top:12px;">
+          <button id="guardarBtn" class="primary">💾 Guardar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2) Acciones e historial -->
+    <section class="card">
+      <div class="card-title">2) Historial y acciones</div>
+
+      <div class="btns">
+        <button id="syncBtn">☁️ Sincronizar a Google Sheets</button>
+        <button id="exportarBtn">⬇️ Exportar CSV</button>
+        <button id="limpiarBtn" class="danger">🧹 Limpiar</button>
+      </div>
+
+      <div class="small muted" style="margin-top:10px;">
+        Registros en dispositivo: <span id="totalReg">0</span>
+      </div>
+
+      <div id="historial" class="historial" style="margin-top:10px;"></div>
+    </section>
+
+  </main>
+
   <script src="./html5-qrcode.min.js"></script>
 
-  <!-- Contexto (controlado en index, persistido en localStorage) -->
   <script>
     (function(){
       const KEY_CTX = "qr_contexto_sesion_v1";
@@ -443,10 +196,13 @@
       const selAsig = document.getElementById("contextoClase");
       const selBloq = document.getElementById("horaClaseInicio");
       const btn = document.getElementById("btnAlistar");
+      const btnClear = document.getElementById("btnBorrarCtx");
 
       const pAsig = document.getElementById("ctxPreviewAsig");
       const pBloq = document.getElementById("ctxPreviewBloq");
       const pT0 = document.getElementById("ctxPreviewT0");
+
+      let locked = false;
 
       function safeParseJSON(raw, fallback){
         try{ const v = JSON.parse(raw); return v ?? fallback; }catch{ return fallback; }
@@ -462,33 +218,100 @@
         pT0.textContent = t0 ? (t0 + " (" + (t0) + ")") : "—";
       }
 
+      function setLocked(v){
+        locked = !!v;
+        if (selAsig) selAsig.disabled = locked;
+        if (selBloq) selBloq.disabled = locked;
+
+        if (btn){
+          btn.textContent = locked ? "🔓 Cambiar" : "✅ Alistar";
+        }
+      }
+
+      function persistContext(){
+        const asignatura = (selAsig.value || "").trim();
+        const bloque = (selBloq.value || "").trim();
+
+        if(!asignatura || !bloque){
+          return false;
+        }
+
+        const bloqueLabel = (selBloq.options[selBloq.selectedIndex] || {}).textContent || bloque;
+
+        try{
+          localStorage.setItem(KEY_CTX, JSON.stringify({
+            asignatura,
+            bloque,
+            bloqueLabel: String(bloqueLabel || "").trim(),
+            updatedAt: new Date().toISOString(),
+            locked: locked
+          }));
+        }catch{}
+        return true;
+      }
+
       function cargarContexto(){
         const raw = localStorage.getItem(KEY_CTX);
         const ctx = raw ? safeParseJSON(raw, null) : null;
+
         if(ctx && ctx.asignatura && ctx.bloque){
           selAsig.value = ctx.asignatura;
           selBloq.value = String(ctx.bloque);
         }
+
         refreshPreview();
+        setLocked(!!(ctx && ctx.locked));
       }
 
-      selAsig.addEventListener("change", refreshPreview);
-      selBloq.addEventListener("change", refreshPreview);
+      selAsig && selAsig.addEventListener("change", refreshPreview);
+      selBloq && selBloq.addEventListener("change", refreshPreview);
 
-      btn.addEventListener("click", () => {
+      // ✅ Alistar / 🔓 Cambiar
+      btn && btn.addEventListener("click", () => {
+        // Si está fijado, pasamos a modo edición (desbloquear) sin borrar el contexto
+        if(locked){
+          setLocked(false);
+          // Persistimos estado desbloqueado
+          const raw = localStorage.getItem(KEY_CTX);
+          const ctx = raw ? safeParseJSON(raw, null) : null;
+          if(ctx){
+            try{
+              localStorage.setItem(KEY_CTX, JSON.stringify({
+                ...ctx,
+                locked: false,
+                updatedAt: new Date().toISOString()
+              }));
+            }catch{}
+          }
+          return;
+        }
+
+        // Si NO está fijado: validamos y fijamos
         const asignatura = (selAsig.value || "").trim();
         const bloque = (selBloq.value || "").trim();
-
         if(!asignatura || !bloque){
           alert("Debes seleccionar Asignatura/Grupo y Hora-clase inicio.");
           return;
         }
 
-        localStorage.setItem(KEY_CTX, JSON.stringify({
-          asignatura,
-          bloque,
-          updatedAt: new Date().toISOString()
-        }));
+        // Guardar + Fijar (bloquear selects)
+        setLocked(true);
+        persistContext();
+        refreshPreview();
+      });
+
+      // 🧹 Borrar contexto
+      btnClear && btnClear.addEventListener("click", () => {
+        const ok = confirm("¿Borrar el contexto de sesión?\n\nEsto NO elimina registros guardados.");
+        if(!ok) return;
+
+        try{ localStorage.removeItem(KEY_CTX); }catch{}
+
+        setLocked(false);
+
+        // Reset selects
+        if(selAsig) selAsig.value = "";
+        if(selBloq) selBloq.value = "";
 
         refreshPreview();
       });
