@@ -46,6 +46,66 @@ document.addEventListener("DOMContentLoaded", () => {
     "https://script.google.com/macros/s/AKfycbzbbTA4VFxI8hv2qNqZWaBgMOwrc22lmf1-MSv7Y5uf_gey96Fxbz_HJC2vP-7TO6s/exec";
   const KEY_DEVICE_ID = "qr_device_id_v1";
 
+  // ===== PASO 3: Contexto (solo inyección en registro local + CSV) =====
+  const KEY_CTX = "qr_contexto_sesion_v1";
+  const BLOQUE_T0_24H = {
+    "1": "07:00:00",
+    "2": "07:54:00",
+    "3": "08:48:00",
+    "4": "09:52:00",
+    "5": "10:46:00",
+    "6": "11:40:00",
+    "7": "13:14:00",
+    "8": "14:08:00",
+  };
+
+  function safeParseJSON(raw, fallback) {
+    try {
+      const v = JSON.parse(raw);
+      return v ?? fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function getContextoSesion() {
+    const raw = localStorage.getItem(KEY_CTX);
+    if (!raw) {
+      return {
+        asignatura: "",
+        bloqueInicio: "",
+        horaInicioBloque: "",
+        contextoUpdatedAt: "",
+      };
+    }
+    const ctx = safeParseJSON(raw, null);
+    if (!ctx || typeof ctx !== "object") {
+      return {
+        asignatura: "",
+        bloqueInicio: "",
+        horaInicioBloque: "",
+        contextoUpdatedAt: "",
+      };
+    }
+
+    const asignatura = typeof ctx.asignatura === "string" ? ctx.asignatura.trim() : "";
+    const bloqueInicio = typeof ctx.bloque === "string" ? ctx.bloque.trim() : "";
+    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
+    const contextoUpdatedAt = typeof ctx.updatedAt === "string" ? ctx.updatedAt : "";
+
+    return { asignatura, bloqueInicio, horaInicioBloque, contextoUpdatedAt };
+  }
+
+  function inyectarContextoEnRegistro(reg) {
+    const c = getContextoSesion();
+    reg.asignatura = c.asignatura || "-";
+    reg.bloqueInicio = c.bloqueInicio || "";
+    reg.horaInicioBloque = c.horaInicioBloque || "";
+    reg.contextoUpdatedAt = c.contextoUpdatedAt || "";
+    return reg;
+  }
+  // ===== /PASO 3 =====
+
   // Observaciones tipo (Llegada tarde) — por defecto + personalizadas
   const KEY_OBS_TARDE = "obs_tipos_tarde_v1";
   const OBS_TARDE_DEFAULT = [
@@ -93,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "III.3 Agresión verbal/moral grave",
       "III.4 Sabotaje/protesta violenta",
       "III.5 Injuria/calumnia/publicación deshonrosa",
-      "III.6 Portar armas/objetos peligrosos",
+      "III.6 Portar/consumir cigarrillo, vaper o SPA",
       "III.7 Atentar contra salud/integridad",
       "III.8 Fraude/copia/plagio/falsificación",
       "III.9 Plagio/derechos de autor",
@@ -105,15 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "III.15 Publicar mensajes/fotos/videos sin permiso",
     ],
   };
-
-  function safeParseJSON(raw, fallback) {
-    try {
-      const v = JSON.parse(raw);
-      return v ?? fallback;
-    } catch {
-      return fallback;
-    }
-  }
 
   function norm(s) {
     return String(s || "").trim().toLowerCase();
@@ -171,7 +222,13 @@ document.addEventListener("DOMContentLoaded", () => {
         })(),
         falta: r.falta || "",
         obs: r.obs || "",
-        syncedAt: r.syncedAt || "", // sync marker
+        syncedAt: r.syncedAt || "",
+
+        // PASO 3: campos de contexto (tolerantes a versiones viejas)
+        asignatura: r.asignatura || "",
+        bloqueInicio: r.bloqueInicio || "",
+        horaInicioBloque: r.horaInicioBloque || "",
+        contextoUpdatedAt: r.contextoUpdatedAt || "",
       }));
     } catch {
       return [];
@@ -373,6 +430,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportedAt = new Date().toISOString();
     const deviceId = getDeviceId();
 
+    // ⚠️ PASO 3: mantenemos el payload EXACTO como estaba para no arriesgar compatibilidad del Apps Script.
+    // El contexto ya va en local + CSV. Más adelante hacemos el update del backend y del payload (Paso 4/5).
     const records = pendingSync.map((r) => ({
       uid: makeUid(r),
       timestamp: r.timestamp || "",
@@ -415,7 +474,6 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(out && out.error ? out.error : "No se pudo confirmar respuesta de Google");
       }
 
-      // Confirmado OK: ofrecer borrar lo enviado
       const uids = new Set(records.map((x) => x.uid));
       const enviados = pendingSync.length;
 
@@ -496,6 +554,12 @@ document.addEventListener("DOMContentLoaded", () => {
             falta: "",
             obs: "",
             syncedAt: "",
+
+            // PASO 3: los campos se llenan al GUARDAR (no al escanear)
+            asignatura: "",
+            bloqueInicio: "",
+            horaInicioBloque: "",
+            contextoUpdatedAt: "",
           };
 
           codigoActual.textContent = `Código: ${codigoQR}`;
@@ -629,6 +693,9 @@ document.addEventListener("DOMContentLoaded", () => {
       pending.falta = "";
     }
 
+    // ✅ PASO 3: inyectar contexto activo al guardar (no rompe si no hay contexto)
+    inyectarContextoEnRegistro(pending);
+
     addRegistro(pending);
     setNotice(`<strong>Guardado.</strong> Puedes escanear el siguiente QR.`);
     pending = null;
@@ -639,6 +706,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function exportarCSV() {
     const arr = getRegistros();
+
+    // ⚠️ Header original (sin romper) + campos de contexto al final
     const header = [
       "timestamp",
       "fechaISO",
@@ -651,8 +720,15 @@ document.addEventListener("DOMContentLoaded", () => {
       "falta",
       "observacion",
       "syncedAt",
+      // PASO 3
+      "asignatura",
+      "bloqueInicio",
+      "horaInicioBloque",
+      "contextoUpdatedAt",
     ];
+
     const rows = [toCSVRow(header)];
+
     for (const r of arr.slice().reverse()) {
       rows.push(
         toCSVRow([
@@ -667,19 +743,25 @@ document.addEventListener("DOMContentLoaded", () => {
           r.falta || "",
           r.obs || "",
           r.syncedAt || "",
+          // PASO 3
+          r.asignatura || "",
+          r.bloqueInicio || "",
+          r.horaInicioBloque || "",
+          r.contextoUpdatedAt || "",
         ])
       );
     }
+
     const now = new Date().toISOString().slice(0, 10);
     downloadText(`registros_qr_${now}.csv`, rows.join("\n"));
   }
 
   function renderRegistros() {
     const arr = getRegistros();
-    totalReg.textContent = String(arr.length);
+    if (totalReg) totalReg.textContent = String(arr.length);
 
     if (!arr.length) {
-      historial.innerHTML = `<div class="empty">Aún no hay registros.</div>`;
+      if (historial) historial.innerHTML = `<div class="empty">Aún no hay registros.</div>`;
       return;
     }
 
@@ -687,15 +769,22 @@ document.addEventListener("DOMContentLoaded", () => {
       .slice(0, 200)
       .map((r) => {
         const chips = [];
-        chips.push(
-          `<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`
-        );
+        chips.push(`<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`);
+
+        // PASO 3: chips de contexto (si existen)
+        if (r.asignatura && r.asignatura !== "-") {
+          chips.push(`<span class="chip">${escapeHtml(r.asignatura)}</span>`);
+        }
+        if (r.bloqueInicio) {
+          chips.push(`<span class="chip">Inicio: ${escapeHtml(r.bloqueInicio)}°</span>`);
+        }
+        if (r.horaInicioBloque) {
+          chips.push(`<span class="chip">T0: ${escapeHtml(r.horaInicioBloque)}</span>`);
+        }
 
         if ((r.tipo === "INASISTENCIA" || r.tipo === "TARDE") && r.excusa) {
           chips.push(
-            `<span class="chip">${
-              r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"
-            }</span>`
+            `<span class="chip">${r.excusa === "CON_EXCUSA" ? "Con excusa" : "Sin excusa"}</span>`
           );
         }
 
@@ -726,7 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .join("");
 
-    historial.innerHTML = html;
+    if (historial) historial.innerHTML = html;
   }
 
   // --- Bindings ---
