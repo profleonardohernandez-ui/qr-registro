@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1220" />
   <title>QR Profe — Registro</title>
 
@@ -10,130 +10,222 @@
     :root{
       --bg:#0b1220;
       --card:#0f1a2e;
+      --card2:#101f38;
       --text:#e8eefc;
       --muted:#a9b7d6;
       --line:rgba(255,255,255,.08);
       --primary:#4f8cff;
+      --primary2:#3a73ff;
       --danger:#ff4f64;
+      --warn:#ffcc66;
+      --ok:#3ddc97;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius:16px;
+      --radius:18px;
     }
+
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background: var(--bg);
-      color: var(--text);
+      background:radial-gradient(1200px 600px at 30% -10%, rgba(79,140,255,.18), transparent 60%),
+                 radial-gradient(900px 500px at 100% 0%, rgba(61,220,151,.10), transparent 55%),
+                 var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      padding:18px 14px 40px;
     }
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 48px;}
-    header{display:flex;justify-content:space-between;gap:14px;margin-bottom:14px;}
-    h1{margin:0;font-size:20px}
-    .small{font-size:12px;color:var(--muted);line-height:1.25}
 
-    .grid{display:grid;grid-template-columns:1fr;gap:12px;}
-    @media (min-width: 820px){ .grid{grid-template-columns:1.15fr .85fr;} }
+    .wrap{max-width:920px;margin:0 auto}
+
+    header{
+      display:flex; align-items:flex-end; justify-content:space-between;
+      gap:14px; margin-bottom:14px;
+    }
+    .brand h1{margin:0;font-size:18px;letter-spacing:.2px}
+    .brand .sub{margin-top:4px;color:var(--muted);font-size:12px}
+
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:6px 10px; border:1px solid var(--line); border-radius:999px;
+      background:rgba(255,255,255,.04); color:var(--muted); font-size:12px;
+      white-space:nowrap;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media(min-width:900px){
+      .grid{ grid-template-columns: 1.1fr .9fr; }
+    }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
       border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding:14px;
     }
-    .card-title{font-weight:800;margin-bottom:8px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .field{display:flex;flex-direction:column;gap:6px;min-width:200px;flex:1}
+    .card-title{
+      font-weight:800;
+      font-size:13px;
+      letter-spacing:.2px;
+      margin-bottom:10px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .small{font-size:12px;color:var(--muted);line-height:1.35}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .field{display:grid; gap:6px; min-width:180px; flex:1}
     label{font-size:12px;color:var(--muted)}
     .input-std{
       width:100%;
-      padding:10px 12px;
-      background: rgba(0,0,0,.25);
       border:1px solid var(--line);
       border-radius:12px;
+      padding:12px 12px;
+      font-size:16px; /* evita zoom iPhone */
+      background:rgba(0,0,0,.25);
       color:var(--text);
       outline:none;
-      font-size:16px; /* evita zoom iPhone */
     }
+    select.input-std{padding-right:34px}
+
     .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
       padding:10px 12px;
       border-radius:12px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      cursor:pointer;
       font-weight:700;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease;
+      user-select:none;
     }
-    .btn-primary{background: linear-gradient(180deg, rgba(79,140,255,.95), rgba(58,115,255,.95));}
-    .btn-danger{background: rgba(255,79,100,.14); border-color: rgba(255,79,100,.45);}
-    .btn-ghost{background: transparent;}
-    .sep{height:1px;background:var(--line);margin:12px 0}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(79,140,255,.95), rgba(58,115,255,.85));
+      border-color: rgba(79,140,255,.35);
+    }
+    .btn.danger{
+      background:linear-gradient(180deg, rgba(255,79,100,.85), rgba(255,79,100,.65));
+      border-color: rgba(255,79,100,.35);
+    }
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    #notice{
+      border:1px dashed rgba(255,255,255,.15);
+      background:rgba(255,255,255,.04);
+      padding:10px 12px;
+      border-radius:12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      margin-top:10px;
+    }
 
     #qr-reader{
       width:100%;
-      min-height:240px;
       border-radius:14px;
-      border:1px dashed rgba(255,255,255,.15);
-      background: rgba(0,0,0,.18);
-      display:none; /* el JS lo muestra al escanear */
-      align-items:center;
-      justify-content:center;
-      color: rgba(255,255,255,.55);
       overflow:hidden;
-    }
-    .notice{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:12px;
       border:1px solid var(--line);
-      background: rgba(0,0,0,.25);
-      color: var(--muted);
-      min-height:42px;
+      background:rgba(0,0,0,.25);
+      margin-top:10px;
     }
 
-    /* Historial básico */
-    .hist{max-height:320px; overflow:auto; border-top:1px solid var(--line); margin-top:10px; padding-top:10px;}
-    .empty{color:var(--muted);padding:10px 0}
-    .item{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);}
-    .item-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
-    .chips{display:flex;flex-wrap:wrap;gap:6px}
-    .chip{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px}
-    .tipo-tarde{border-color: rgba(255,204,102,.6)}
-    .tipo-convivencia{border-color: rgba(255,79,100,.6)}
-    .tipo-inasistencia{border-color: rgba(255,255,255,.18)}
-    .when{color:var(--muted);font-size:12px}
-    .code{font-weight:800}
-    .obs{margin-top:6px;color:var(--muted);font-size:12px}
+    .kpis{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top:10px;
+    }
+    .kpi{
+      padding:8px 10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      border-radius:12px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .kpi strong{color:var(--text)}
 
-    /* Contexto */
-    .context-card{border-left:4px solid #3b82f6;}
+    .list{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+    .item{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(0,0,0,.18);
+    }
+    .item-top{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .chips{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+    .chip{
+      font-size:12px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+    }
+    .tipo-tarde{border-color:rgba(255,204,102,.35); background:rgba(255,204,102,.10)}
+    .tipo-convivencia{border-color:rgba(255,79,100,.35); background:rgba(255,79,100,.10)}
+    .tipo-inasistencia{border-color:rgba(79,140,255,.35); background:rgba(79,140,255,.10)}
+    .when{color:var(--muted);font-size:12px}
+    .code{margin-top:6px;color:var(--text);font-weight:800;letter-spacing:.1px}
+    .obs{margin-top:8px;color:var(--muted);font-size:13px;white-space:pre-wrap}
+
+    .empty{
+      padding:12px;
+      border:1px dashed rgba(255,255,255,.15);
+      border-radius:14px;
+      color:var(--muted);
+      font-size:13px;
+      text-align:center;
+    }
+
+    /* Card especial de contexto (la que te gustó) */
+    .ctx{
+      border-left: 4px solid rgba(79,140,255,.9);
+      background:linear-gradient(180deg, rgba(79,140,255,.10), rgba(255,255,255,.03));
+    }
+    .ctx .preview{
+      display:grid; gap:4px; margin-top:10px;
+      padding:10px 12px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+    }
+    .ctx .preview .p{font-size:12px;color:var(--muted)}
+    .ctx .preview .p strong{color:var(--text)}
   </style>
 </head>
 
 <body>
   <div class="wrap">
     <header>
-      <div>
+      <div class="brand">
         <h1>QR Profe — Registro</h1>
-        <div class="small">Versión estable + Contexto (Paso 2 con T0)</div>
+        <div class="sub">Offline-first • Escaneo rápido • Sincronización por lote</div>
       </div>
+      <div class="pill">📌 Regla de oro: no tocar lo que ya funciona</div>
     </header>
 
-    <!-- ✅ Contexto de sesión (UI + Persistencia) -->
-    <section class="card context-card">
-      <div class="row" style="justify-content:space-between;align-items:flex-start;">
-        <div>
-          <div class="card-title">Contexto de sesión</div>
-          <div id="contextoT0Hint" class="small">T0: —</div>
-          <div id="contextoActivo" class="small">Contexto activo: (sin configurar)</div>
-        </div>
-        <button id="btnContextoToggle" class="btn btn-ghost" type="button">🎛 Contexto</button>
+    <!-- 0) CONTEXTO DE SESIÓN -->
+    <section class="card ctx">
+      <div class="card-title">
+        <span>0) Contexto de sesión</span>
+        <button id="alistarBtn" class="btn primary" type="button">✅ Alistar</button>
       </div>
+      <div class="small">Elige Asignatura/Grupo y Hora-clase inicio (1–8). Descanso y almuerzo no se manejan como bloques en la app.</div>
 
-      <div id="panelContexto" class="row" style="margin-top:12px;" hidden>
-        <div class="field">
-          <label for="contextoAsignatura"><b>Asignatura / Grupo</b></label>
-          <select id="contextoAsignatura" class="input-std">
-            <option value="">-- Seleccionar --</option>
+      <div class="row" style="margin-top:10px;">
+        <div class="field" style="min-width:220px;">
+          <label for="contextoClase"><strong>Asignatura / Grupo</strong></label>
+          <select id="contextoClase" class="input-std">
+            <option value="">— Seleccionar —</option>
             <option value="Economía 11°A">Economía 11°A</option>
             <option value="Economía 11°B">Economía 11°B</option>
             <option value="Filosofía 11°A">Filosofía 11°A</option>
@@ -143,61 +235,56 @@
             <option value="C. Sociales 6°A">C. Sociales 6°A</option>
             <option value="C. Sociales 6°B">C. Sociales 6°B</option>
             <option value="C. Sociales POS">C. Sociales POS</option>
-            <option value="EVENTO">EVENTO</option>
+            <option value="EVENTO">Evento / Izada de bandera</option>
           </select>
         </div>
 
-        <div class="field">
-          <label for="contextoBloque"><b>Hora-clase de inicio</b></label>
-          <select id="contextoBloque" class="input-std">
-            <option value="">-- Seleccionar (1° a 8°) --</option>
-            <option value="1">1°</option><option value="2">2°</option>
-            <option value="3">3°</option><option value="4">4°</option>
-            <option value="5">5°</option><option value="6">6°</option>
-            <option value="7">7°</option><option value="8">8°</option>
+        <div class="field" style="min-width:220px;">
+          <label for="horaClaseInicio"><strong>Hora-clase inicio</strong></label>
+          <select id="horaClaseInicio" class="input-std">
+            <option value="">— Seleccionar —</option>
+            <option value="1">1° (07:00 - 07:54)</option>
+            <option value="2">2° (07:54 - 08:48)</option>
+            <option value="3">3° (08:48 - 09:42)</option>
+            <option value="4">4° (09:52 - 10:46)</option>
+            <option value="5">5° (10:46 - 11:40)</option>
+            <option value="6">6° (12:06 - 13:00)</option>
+            <option value="7">7° (13:00 - 13:54)</option>
+            <option value="8">8° (13:54 - 14:48)</option>
           </select>
         </div>
+      </div>
 
-        <div class="row" style="align-items:flex-end;">
-          <button id="btnContextoGuardar" class="btn btn-primary" type="button">✅ Alistar</button>
-          <button id="btnContextoLimpiar" class="btn btn-ghost" type="button">🧹 Limpiar</button>
-        </div>
+      <div class="preview" aria-live="polite">
+        <div class="p" id="ctxAsig">Asignatura: —</div>
+        <div class="p" id="ctxInicio">Inicio: —</div>
+        <div class="p"><strong id="ctxT0">T0 - —</strong></div>
       </div>
     </section>
 
-    <div class="grid" style="margin-top:12px;">
+    <div class="grid">
+      <!-- OPERACIÓN: ESCANEO + FORM -->
+      <section class="card">
+        <div class="card-title">1) Escaneo y registro</div>
 
-      <!-- IZQUIERDA -->
-      <div>
-        <section class="card">
-          <div class="card-title">Escáner</div>
-          <div class="small" style="margin-bottom:10px;">Inicia el escáner y apunta al QR del estudiante.</div>
+        <div class="row" style="align-items:center;">
+          <button id="scanBtn" class="btn primary" type="button">📷 Escanear QR</button>
+          <button id="cancelScanBtn" class="btn" type="button" style="display:none;">✋ Cancelar</button>
+        </div>
 
-          <div id="qr-reader">Área del escáner</div>
+        <div id="qr-reader"></div>
 
-          <div class="row" style="margin-top:12px;">
-            <button id="scanBtn" class="btn btn-primary" type="button">▶ Escanear QR</button>
-            <button id="cancelScanBtn" class="btn btn-ghost" type="button" style="display:none;">⏸ Cancelar</button>
-          </div>
+        <div id="notice">Listo. Presiona <strong>Escanear QR</strong>.</div>
 
-          <div id="notice" class="notice">Listo.</div>
-        </section>
-      </div>
+        <div class="kpis">
+          <div class="kpi"><strong id="codigoActual">Código: —</strong></div>
+          <div class="kpi"><strong id="horaActual">Hora: —</strong></div>
+        </div>
 
-      <!-- DERECHA -->
-      <div>
-        <section class="card">
-          <div class="card-title">Registro</div>
-          <div class="small">Cuando se detecta un QR, completa el evento y guarda.</div>
-
-          <div class="sep"></div>
-
-          <div id="codigoActual" class="small">Código: —</div>
-          <div id="horaActual" class="small">Hora: —</div>
-
-          <form id="formEvento" style="display:none; margin-top:12px;">
+        <form id="formEvento" style="display:none; margin-top:12px;">
+          <div class="row">
             <div class="field">
-              <label for="tipo"><b>Tipo</b></label>
+              <label for="tipo"><strong>Tipo de registro</strong></label>
               <select id="tipo" class="input-std">
                 <option value="INASISTENCIA">INASISTENCIA</option>
                 <option value="TARDE">TARDE</option>
@@ -205,16 +292,16 @@
               </select>
             </div>
 
-            <div id="wrapExcusa" class="field" style="margin-top:10px; display:none;">
-              <label for="excusa"><b>Excusa</b></label>
+            <div class="field" id="wrapExcusa" style="min-width:200px; display:none;">
+              <label for="excusa"><strong>Excusa</strong></label>
               <select id="excusa" class="input-std">
                 <option value="SIN_EXCUSA">SIN_EXCUSA</option>
                 <option value="CON_EXCUSA">CON_EXCUSA</option>
               </select>
             </div>
 
-            <div id="wrapNivel" class="field" style="margin-top:10px; display:none;">
-              <label for="nivel"><b>Nivel (Convivencia)</b></label>
+            <div class="field" id="wrapNivel" style="min-width:200px; display:none;">
+              <label for="nivel"><strong>Nivel</strong></label>
               <select id="nivel" class="input-std">
                 <option value="TIPO_I">TIPO_I</option>
                 <option value="TIPO_II">TIPO_II</option>
@@ -222,183 +309,142 @@
               </select>
             </div>
 
-            <div id="wrapFalta" class="field" style="margin-top:10px; display:none;">
-              <label for="falta"><b>Falta</b></label>
+            <div class="field" id="wrapFalta" style="min-width:320px; display:none;">
+              <label for="falta"><strong>Falta</strong></label>
               <select id="falta" class="input-std"></select>
             </div>
 
-            <div id="wrapFaltaOtra" class="field" style="margin-top:10px; display:none;">
-              <label for="faltaOtra"><b>Otra falta</b></label>
-              <input id="faltaOtra" class="input-std" type="text" placeholder="Escribe la nueva falta" />
+            <div class="field" id="wrapFaltaOtra" style="min-width:320px; display:none;">
+              <label for="faltaOtra"><strong>Otra falta (guardar nueva)</strong></label>
+              <input id="faltaOtra" class="input-std" placeholder="Escribe la falta..." />
             </div>
 
-            <div id="wrapObsTipo" class="field" style="margin-top:10px; display:none;">
-              <label for="obsTipo"><b>Observación tipo (Tarde)</b></label>
+            <div class="field" id="wrapObsTipo" style="min-width:320px; display:none;">
+              <label for="obsTipo"><strong>Observación tipo (Tarde)</strong></label>
               <select id="obsTipo" class="input-std"></select>
             </div>
 
-            <div class="field" style="margin-top:10px;">
-              <label for="obs"><b>Observación</b></label>
-              <textarea id="obs" class="input-std" rows="4" placeholder="Detalle breve (opcional)"></textarea>
+            <div class="field" style="min-width:320px;">
+              <label for="obs"><strong>Observación</strong></label>
+              <input id="obs" class="input-std" placeholder="(Opcional)" />
             </div>
-
-            <div class="row" style="justify-content:flex-end; margin-top:12px;">
-              <button id="guardarBtn" class="btn btn-primary" type="button">💾 Guardar</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="card">
-          <div class="card-title">Exportación</div>
-          <div class="small" style="margin-bottom:10px;">Exporta o sincroniza los registros.</div>
-
-          <div class="row">
-            <button id="exportarBtn" class="btn" type="button">⬇ Exportar CSV</button>
-            <button id="syncBtn" class="btn btn-ghost" type="button">☁️ Sincronizar</button>
-            <button id="limpiarBtn" class="btn btn-danger" type="button">🗑 Borrar (local)</button>
           </div>
-        </section>
 
-        <section class="card">
-          <div class="row" style="justify-content:space-between;align-items:center;">
-            <div class="card-title">Historial</div>
-            <div class="small">Total: <b id="totalReg">0</b></div>
+          <div class="row" style="margin-top:10px;">
+            <button id="guardarBtn" class="btn primary" type="button">💾 Guardar</button>
           </div>
-          <div id="historial" class="hist">
-            <div class="empty">Aún no hay registros.</div>
-          </div>
-        </section>
-      </div>
+        </form>
+      </section>
+
+      <!-- HISTORIAL + ACCIONES -->
+      <section class="card">
+        <div class="card-title">2) Historial y acciones</div>
+
+        <div class="row">
+          <button id="syncBtn" class="btn" type="button">☁️ Sincronizar a Google Sheets</button>
+          <button id="exportarBtn" class="btn" type="button">⬇️ Exportar CSV</button>
+          <button id="limpiarBtn" class="btn danger" type="button">🧹 Limpiar</button>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi">Registros en dispositivo: <strong id="totalReg">0</strong></div>
+        </div>
+
+        <div class="list" id="historial"></div>
+      </section>
     </div>
   </div>
 
-  <!-- ✅ Librería QR (local) -->
+  <!-- Librería cámara -->
   <script src="./html5-qrcode.min.js"></script>
 
-  <!-- ✅ Tu JS estable (sin tocar) -->
-  <script src="./app.20260212-07.js"></script>
-
-  <!-- ✅ Contexto persistente + T0 (NO toca registros ni scanner) -->
+  <!-- Panel de contexto (guarda en localStorage) -->
   <script>
-    (function () {
-      const toggleBtn = document.getElementById("btnContextoToggle");
-      const panel = document.getElementById("panelContexto");
-      const selAsig = document.getElementById("contextoAsignatura");
-      const selBloq = document.getElementById("contextoBloque");
-      const btnOk = document.getElementById("btnContextoGuardar");
-      const btnClr = document.getElementById("btnContextoLimpiar");
-      const activo = document.getElementById("contextoActivo");
-      const t0Hint = document.getElementById("contextoT0Hint");
-
-      // Null-checks: si falta algo, salimos sin romper la app.
-      if (!toggleBtn || !panel || !selAsig || !selBloq || !btnOk || !btnClr || !activo || !t0Hint) return;
-
-      // ✅ KEY independiente — no colisiona con registros_qr_v1
+    (function(){
       const KEY_CTX = "qr_contexto_sesion_v1";
 
-      // ✅ Mapeo Bloque -> Hora de inicio (T0)
-      const BLOQUE_T0_24H = {
-        "1": "07:00",
-        "2": "07:54",
-        "3": "08:48",
-        "4": "09:52",
-        "5": "10:46",
-        "6": "11:40",
-        "7": "13:14",
-        "8": "14:08",
+      // Horario real: 54 min por hora-clase.
+      // Ajuste solicitado:
+      // 6° inicia 12:06 p.m., 7° 1:00 p.m., 8° 1:54 p.m.
+      const BLOQUE_T0 = {
+        "1":"07:00:00",
+        "2":"07:54:00",
+        "3":"08:48:00",
+        "4":"09:52:00",
+        "5":"10:46:00",
+        "6":"12:06:00",
+        "7":"13:00:00",
+        "8":"13:54:00"
       };
 
-      function safeParse(raw, fallback) {
-        try { return JSON.parse(raw) ?? fallback; } catch { return fallback; }
+      const selAsig = document.getElementById("contextoClase");
+      const selBloq = document.getElementById("horaClaseInicio");
+      const btnAlistar = document.getElementById("alistarBtn");
+
+      const pAsig = document.getElementById("ctxAsig");
+      const pIni  = document.getElementById("ctxInicio");
+      const pT0   = document.getElementById("ctxT0");
+
+      function toAMPM(hhmmss){
+        const parts = String(hhmmss || "").split(":");
+        const h = Number(parts[0] || 0);
+        const m = String(parts[1]||"00").padStart(2,"0");
+        const ampm = h >= 12 ? "p.m." : "a.m.";
+        const h12 = ((h + 11) % 12) + 1;
+        return `${h12}:${m} ${ampm}`;
       }
 
-      function toAmPm(hhmm) {
-        if (!hhmm) return "";
-        const [hhStr, mmStr] = hhmm.split(":");
-        const hh = Number(hhStr);
-        const mm = Number(mmStr);
-        if (!Number.isFinite(hh) || !Number.isFinite(mm)) return "";
-        const ampm = hh >= 12 ? "p.m." : "a.m.";
-        const h12 = ((hh + 11) % 12) + 1;
-        return `${h12}:${String(mm).padStart(2, "0")} ${ampm}`;
+      function safeParse(raw){
+        try{ return JSON.parse(raw); } catch { return null; }
       }
 
-      function getT0TextByBloque(bloque) {
-        const hhmm = BLOQUE_T0_24H[String(bloque || "").trim()] || "";
-        return hhmm ? toAmPm(hhmm) : "";
+      function refreshPreview(){
+        const asig = selAsig.value || "—";
+        const bloq = selBloq.value || "—";
+        const t0 = BLOQUE_T0[selBloq.value] || "";
+
+        pAsig.textContent = `Asignatura: ${asig}`;
+        pIni.textContent  = bloq === "—" ? "Inicio: —" : `Inicio: ${bloq}°`;
+        pT0.textContent   = t0 ? `T0 - ${toAMPM(t0)} (${t0})` : "T0 - —";
       }
 
-      function refreshT0Hint() {
-        const b = (selBloq.value || "").trim();
-        const t0 = getT0TextByBloque(b);
-        t0Hint.textContent = t0 ? `T0: ${t0}` : "T0: —";
+      function cargarContexto(){
+        const raw = localStorage.getItem(KEY_CTX);
+        if(!raw) { refreshPreview(); return; }
+        const ctx = safeParse(raw);
+        if(!ctx || typeof ctx !== "object") { refreshPreview(); return; }
+
+        if(typeof ctx.asignatura === "string") selAsig.value = ctx.asignatura;
+        if(typeof ctx.bloque === "string") selBloq.value = ctx.bloque;
+        refreshPreview();
       }
 
-      function setActiveText(ctx) {
-        const asig = (ctx && ctx.asignatura) ? ctx.asignatura : "(sin configurar)";
-        const bloq = (ctx && ctx.bloque) ? `${ctx.bloque}°` : "(sin configurar)";
-        const when = (ctx && ctx.updatedAt) ? ` · ${new Date(ctx.updatedAt).toLocaleString()}` : "";
-        activo.textContent = `Contexto activo: ${asig} · Inicio: ${bloq}${when}`;
-      }
+      selAsig.addEventListener("change", refreshPreview);
+      selBloq.addEventListener("change", refreshPreview);
 
-      function getCtxFromUI() {
+      btnAlistar.addEventListener("click", () => {
         const asignatura = (selAsig.value || "").trim();
         const bloque = (selBloq.value || "").trim();
-        return { asignatura, bloque, updatedAt: new Date().toISOString() };
-      }
 
-      function loadCtx() {
-        const raw = localStorage.getItem(KEY_CTX);
-        const ctx = raw ? safeParse(raw, null) : null;
-
-        if (ctx && typeof ctx === "object") {
-          if (typeof ctx.asignatura === "string") selAsig.value = ctx.asignatura;
-          if (typeof ctx.bloque === "string") selBloq.value = ctx.bloque;
-          setActiveText(ctx);
-        } else {
-          setActiveText(null);
+        if(!asignatura || !bloque){
+          alert("Debes seleccionar Asignatura/Grupo y Hora-clase inicio.");
+          return;
         }
 
-        refreshT0Hint();
-      }
+        localStorage.setItem(KEY_CTX, JSON.stringify({
+          asignatura,
+          bloque,
+          updatedAt: new Date().toISOString()
+        }));
 
-      function saveCtx(ctx) {
-        localStorage.setItem(KEY_CTX, JSON.stringify(ctx));
-        setActiveText(ctx);
-        refreshT0Hint();
-      }
-
-      function clearCtx() {
-        localStorage.removeItem(KEY_CTX);
-        selAsig.value = "";
-        selBloq.value = "";
-        setActiveText(null);
-        refreshT0Hint();
-      }
-
-      // UI: abrir/cerrar panel
-      toggleBtn.addEventListener("click", () => {
-        panel.hidden = !panel.hidden;
+        refreshPreview();
       });
 
-      // Cada vez que cambie el bloque, actualiza T0
-      selBloq.addEventListener("change", refreshT0Hint);
-
-      // ✅ Alistar = guardar en localStorage + cerrar panel
-      btnOk.addEventListener("click", () => {
-        const ctx = getCtxFromUI();
-        saveCtx(ctx);
-        panel.hidden = true;
-      });
-
-      // ✅ Limpiar = borrar localStorage
-      btnClr.addEventListener("click", () => {
-        clearCtx();
-      });
-
-      // Init: cargar contexto persistido
-      loadCtx();
+      cargarContexto();
     })();
   </script>
+
+  <!-- App principal -->
+  <script src="./app.20260212-07.js"></script>
 </body>
 </html>
