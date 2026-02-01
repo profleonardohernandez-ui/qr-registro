@@ -34,6 +34,146 @@ document.addEventListener("DOMContentLoaded", () => {
   const historial = document.getElementById("historial");
   const totalReg = document.getElementById("totalReg");
 
+  // ============================
+  // ✅ PASO 1 — CONTEXTO (UI + persistencia)
+  // NO toca guardarEvento(), sync, export, etc.
+  // ============================
+  const btnContextoToggle = document.getElementById("btnContextoToggle");
+  const panelContexto = document.getElementById("panelContexto");
+  const contextoAsignatura = document.getElementById("contextoAsignatura");
+  const contextoBloque = document.getElementById("contextoBloque");
+  const btnContextoGuardar = document.getElementById("btnContextoGuardar");
+  const btnContextoLimpiar = document.getElementById("btnContextoLimpiar");
+  const contextoActivo = document.getElementById("contextoActivo");
+  const contextoT0Hint = document.getElementById("contextoT0Hint");
+
+  const KEY_CTX = "qr_contexto_sesion_v1";
+
+  // Bloque 1°–8° → Hora base (T0)
+  // No incluimos descanso/almuerzo en UI (por tu decisión),
+  // pero los saltos horarios quedan reflejados aquí.
+  // Según tu regla: inicio 07:00, clase 54 min,
+  // descanso 09:42–10:52, almuerzo 11:40–12:06.
+  const BLOQUE_T0 = {
+    1: "07:00:00",
+    2: "07:54:00",
+    3: "08:48:00",
+    4: "10:52:00",
+    5: "12:06:00",
+    6: "13:00:00",
+    7: "13:54:00",
+    8: "14:48:00",
+  };
+
+  function getContextoSesion() {
+    try {
+      const raw = localStorage.getItem(KEY_CTX);
+      if (!raw) return { asignatura: "", bloque: "", t0: "", updatedAt: "" };
+      const obj = JSON.parse(raw) || {};
+      return {
+        asignatura: obj.asignatura || "",
+        bloque: obj.bloque || "",
+        t0: obj.t0 || "",
+        updatedAt: obj.updatedAt || "",
+      };
+    } catch {
+      return { asignatura: "", bloque: "", t0: "", updatedAt: "" };
+    }
+  }
+
+  function setContextoSesion(ctx) {
+    localStorage.setItem(KEY_CTX, JSON.stringify(ctx));
+  }
+
+  function clearContextoSesion() {
+    localStorage.removeItem(KEY_CTX);
+  }
+
+  function resolveT0FromBloque(bloque) {
+    return BLOQUE_T0[Number(bloque)] || "";
+  }
+
+  function renderContextoUI() {
+    // Preview T0 con lo que esté seleccionado en el select (sin necesidad de guardar)
+    if (contextoT0Hint && contextoBloque) {
+      const t0p = resolveT0FromBloque(contextoBloque.value);
+      contextoT0Hint.textContent = `Hora base (T0): ${t0p || "—"}`;
+    }
+
+    if (!contextoActivo) return;
+
+    const ctx = getContextoSesion();
+    if (!ctx.asignatura || !ctx.bloque) {
+      contextoActivo.textContent = "Contexto activo: (sin configurar)";
+      return;
+    }
+
+    contextoActivo.textContent = `Contexto activo: ${ctx.asignatura} · Inicio ${ctx.bloque}° (${ctx.t0})`;
+  }
+
+  function initContextoUI() {
+    // Si el index aún no tiene el panel, no hacemos nada (no rompemos lo que ya funciona)
+    if (
+      !btnContextoToggle ||
+      !panelContexto ||
+      !contextoAsignatura ||
+      !contextoBloque ||
+      !btnContextoGuardar ||
+      !btnContextoLimpiar
+    ) {
+      return;
+    }
+
+    // Hidratar selects con lo guardado
+    const ctx = getContextoSesion();
+    contextoAsignatura.value = ctx.asignatura || "";
+    contextoBloque.value = ctx.bloque || "";
+
+    // Toggle panel
+    btnContextoToggle.addEventListener("click", () => {
+      panelContexto.hidden = !panelContexto.hidden;
+      renderContextoUI();
+    });
+
+    // Hint T0
+    contextoBloque.addEventListener("change", () => renderContextoUI());
+
+    // Guardar contexto (alistado)
+    btnContextoGuardar.addEventListener("click", () => {
+      const asignatura = (contextoAsignatura.value || "").trim();
+      const bloque = contextoBloque.value || "";
+      const t0 = resolveT0FromBloque(bloque);
+
+      // Regla de oro: no bloqueamos operación.
+      // Si está incompleto, lo guardamos "como esté" y listo.
+      setContextoSesion({
+        asignatura,
+        bloque,
+        t0,
+        updatedAt: new Date().toISOString(),
+      });
+
+      renderContextoUI();
+      // Aviso suave sin interferir
+      setNotice(
+        `<strong>Contexto alistado.</strong><br><span class="small">${escapeHtml(
+          asignatura || "—"
+        )} · ${escapeHtml(bloque || "—")}°</span>`
+      );
+    });
+
+    // Limpiar
+    btnContextoLimpiar.addEventListener("click", () => {
+      clearContextoSesion();
+      contextoAsignatura.value = "";
+      contextoBloque.value = "";
+      renderContextoUI();
+      setNotice(`<strong>Contexto limpiado.</strong>`);
+    });
+
+    renderContextoUI();
+  }
+
   // --- State ---
   let qrScanner = null;
   let pending = null;
@@ -750,4 +890,7 @@ document.addEventListener("DOMContentLoaded", () => {
   refreshFaltaOptions();
   renderRegistros();
   updateFormByTipo();
+
+  // ✅ PASO 1 — init contexto al final (no interfiere con nada)
+  initContextoUI();
 });
