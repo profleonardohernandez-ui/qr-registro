@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Storage ---
   const KEY = "registros_qr_v1";
 
-  // === CONTEXTO (PASO 3): puente de datos desde localStorage ===
+  // === PASO 3: Contexto de sesión (solo LOCAL + CSV + HISTORIAL) ===
   // Lo guarda index.html bajo esta llave:
   // { asignatura: "Economía 11°A", bloque: "1", updatedAt: "2026-02-01T...Z" }
   const KEY_CTX = "qr_contexto_sesion_v1";
@@ -58,6 +58,18 @@ document.addEventListener("DOMContentLoaded", () => {
     "6": "12:06:00",
     "7": "13:00:00",
     "8": "13:54:00",
+  };
+
+  // Etiquetas humanas del bloque para chips (lo que el docente entiende de un vistazo)
+  const BLOQUE_LABEL = {
+    "1": "1° (07:00 - 07:54)",
+    "2": "2° (07:54 - 08:48)",
+    "3": "3° (08:48 - 09:42)",
+    "4": "4° (09:52 - 10:46)",
+    "5": "5° (10:46 - 11:40)",
+    "6": "6° (12:06 - 13:00)",
+    "7": "7° (13:00 - 13:54)",
+    "8": "8° (13:54 - 14:48)",
   };
 
   // === Google Sheets Sync ===
@@ -84,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "I.4 Retener/ocultar comunicados a acudientes",
       "I.5 Ventas/colectas/apuestas dentro del colegio",
       "I.6 Irrespeto o conducta inadecuada",
-      "I.7 Uniforme: uso/porte inadecuado",
+      "I.7 Uniforme: uso/porte inadecuada",
       "I.8 Celular/tecnología: uso indebido en clase",
       "I.9 Incumplimiento académico reiterado",
       "I.10 Evasión/retardo/inasistencia injustificada",
@@ -112,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "III.3 Agresión verbal/moral grave",
       "III.4 Sabotaje/protesta violenta",
       "III.5 Injuria/calumnia/publicación deshonrosa",
-      "III.6 Portar/consumir cigarrillo, vaper o SPA",
+      "III.6 Portar armas/objetos peligrosos",
       "III.7 Atentar contra salud/integridad",
       "III.8 Fraude/copia/plagio/falsificación",
       "III.9 Plagio/derechos de autor",
@@ -169,32 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return merged;
   }
 
-  // === CONTEXTO: lectura e inyección ===
-  function getContextoSesion() {
-    const raw = localStorage.getItem(KEY_CTX);
-    const ctx = raw ? safeParseJSON(raw, null) : null;
-
-    const asignatura =
-      ctx && typeof ctx.asignatura === "string" ? ctx.asignatura.trim() : "";
-    const bloqueInicio =
-      ctx && typeof ctx.bloque === "string" ? ctx.bloque.trim() : "";
-    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
-    const contextoUpdatedAt =
-      ctx && typeof ctx.updatedAt === "string" ? ctx.updatedAt : "";
-
-    return { asignatura, bloqueInicio, horaInicioBloque, contextoUpdatedAt };
-  }
-
-  function inyectarContextoEnRegistro(reg) {
-    const c = getContextoSesion();
-    reg.asignatura = c.asignatura || "-";
-    reg.bloqueInicio = c.bloqueInicio || "";
-    reg.horaInicioBloque = c.horaInicioBloque || "";
-    reg.contextoUpdatedAt = c.contextoUpdatedAt || "";
-    return reg;
-  }
-  // === /CONTEXTO ===
-
   function getRegistros() {
     try {
       const raw = localStorage.getItem(KEY);
@@ -218,9 +204,10 @@ document.addEventListener("DOMContentLoaded", () => {
         obs: r.obs || "",
         syncedAt: r.syncedAt || "", // sync marker
 
-        // === CONTEXTO (compatible con registros viejos) ===
+        // === PASO 3: CONTEXTO (compatibilidad con registros viejos) ===
         asignatura: r.asignatura || "",
         bloqueInicio: r.bloqueInicio || "",
+        bloqueLabel: r.bloqueLabel || "",
         horaInicioBloque: r.horaInicioBloque || "",
         contextoUpdatedAt: r.contextoUpdatedAt || "",
       }));
@@ -424,7 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportedAt = new Date().toISOString();
     const deviceId = getDeviceId();
 
-    // ⚠️ Regla de oro: NO se toca el payload del sync en este paso.
     const records = pendingSync.map((r) => ({
       uid: makeUid(r),
       timestamp: r.timestamp || "",
@@ -513,6 +499,107 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // === PASO 3: Contexto → puente de datos y cálculo de T0 ===
+  function normalizeBloqueValue(v) {
+    const s = String(v ?? "").trim();
+    const m = s.match(/(\d+)/);
+    return m ? m[1] : "";
+  }
+
+  function getContextoSesion() {
+    // 0) Lectura del DOM (lo que el docente VE en pantalla). Prioridad máxima.
+    const selAsig = document.getElementById("contextoClase");
+    const selBloq = document.getElementById("horaClaseInicio");
+
+    const domAsig =
+      selAsig && typeof selAsig.value === "string" ? selAsig.value.trim() : "";
+    const domBloqRaw =
+      selBloq && typeof selBloq.value === "string" ? selBloq.value.trim() : "";
+    const domBloq = normalizeBloqueValue(domBloqRaw);
+
+    let domBloqLabel = "";
+    if (selBloq && selBloq.options && selBloq.selectedIndex >= 0) {
+      domBloqLabel = (selBloq.options[selBloq.selectedIndex] || {}).textContent || "";
+      domBloqLabel = String(domBloqLabel || "").trim();
+    }
+
+    // 1) Lectura de localStorage (lo setea index.html con el botón "Alistar")
+    const raw = localStorage.getItem(KEY_CTX);
+    const ctx = raw ? safeParseJSON(raw, null) : null;
+
+    // Acepta llaves alternativas por compatibilidad con versiones previas/terceras opiniones
+    const lsAsigRaw =
+      ctx && typeof ctx.asignatura === "string"
+        ? ctx.asignatura
+        : ctx && typeof ctx.contextoClase === "string"
+        ? ctx.contextoClase
+        : "";
+
+    const lsBloqRaw =
+      ctx && (typeof ctx.bloque === "string" || typeof ctx.bloque === "number")
+        ? ctx.bloque
+        : ctx && (typeof ctx.bloqueInicio === "string" || typeof ctx.bloqueInicio === "number")
+        ? ctx.bloqueInicio
+        : ctx && (typeof ctx.horaClaseInicio === "string" || typeof ctx.horaClaseInicio === "number")
+        ? ctx.horaClaseInicio
+        : "";
+
+    const lsAsig = String(lsAsigRaw || "").trim();
+    const lsBloq = normalizeBloqueValue(lsBloqRaw);
+
+    const lsUpdatedAt =
+      ctx && typeof ctx.updatedAt === "string"
+        ? ctx.updatedAt
+        : ctx && typeof ctx.contextoUpdatedAt === "string"
+        ? ctx.contextoUpdatedAt
+        : "";
+
+    // 2) Resolución final: DOM > localStorage
+    const asignatura = domAsig || lsAsig || "";
+    const bloqueInicio = domBloq || lsBloq || "";
+
+    // Bloque label: preferimos el texto del <option> seleccionado (más preciso), sino catálogo.
+    let bloqueLabel = domBloqLabel || "";
+    if (!bloqueLabel && ctx && typeof ctx.bloqueLabel === "string") {
+      bloqueLabel = ctx.bloqueLabel.trim();
+    }
+    if (!bloqueLabel && bloqueInicio) {
+      bloqueLabel = BLOQUE_LABEL[bloqueInicio] || `${bloqueInicio}°`;
+    }
+
+    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
+    const contextoUpdatedAt = lsUpdatedAt || "";
+
+    // 3) Persistencia defensiva:
+    // Si DOM tiene datos, "congelamos" ese contexto en localStorage para consistencia.
+    // (Esto NO toca nada del flujo existente; solo evita que la app quede ciega si se olvidó "Alistar").
+    if (domAsig && domBloq) {
+      try {
+        localStorage.setItem(
+          KEY_CTX,
+          JSON.stringify({
+            asignatura: domAsig,
+            bloque: domBloq,
+            bloqueLabel: domBloqLabel || (domBloq ? (BLOQUE_LABEL[domBloq] || `${domBloq}°`) : ""),
+            updatedAt: new Date().toISOString(),
+          })
+        );
+      } catch {}
+    }
+
+    return { asignatura, bloqueInicio, bloqueLabel, horaInicioBloque, contextoUpdatedAt };
+  }
+
+  function inyectarContextoEnRegistro(reg) {
+    const c = getContextoSesion();
+    reg.asignatura = c.asignatura || "-";
+    reg.bloqueInicio = c.bloqueInicio || "";
+    reg.bloqueLabel = c.bloqueLabel || (reg.bloqueInicio ? `${reg.bloqueInicio}°` : "");
+    reg.horaInicioBloque = c.horaInicioBloque || "";
+    reg.contextoUpdatedAt = c.contextoUpdatedAt || "";
+    return reg;
+  }
+
   // --- Scan ---
   async function startScan() {
     formEvento.style.display = "none";
@@ -549,13 +636,15 @@ document.addEventListener("DOMContentLoaded", () => {
             obs: "",
             syncedAt: "",
 
-            // CONTEXTO (se inyecta al escanear)
+            // === PASO 3: CONTEXTO (se congela al escanear) ===
             asignatura: "",
             bloqueInicio: "",
+            bloqueLabel: "",
             horaInicioBloque: "",
             contextoUpdatedAt: "",
           };
 
+          // congela el contexto en el momento del escaneo
           inyectarContextoEnRegistro(pending);
 
           codigoActual.textContent = `Código: ${codigoQR}`;
@@ -689,10 +778,10 @@ document.addEventListener("DOMContentLoaded", () => {
       pending.falta = "";
     }
 
-    // Si por cualquier razón quedó vacío, re-inyecta (defensivo)
-    if (!pending.asignatura || pending.asignatura === "-" || !pending.bloqueInicio) {
-      inyectarContextoEnRegistro(pending);
-    }
+    // PASO 3 (definitivo): inyectar SIEMPRE el contexto justo antes de guardar.
+    // Esto captura el estado real de la sesión en el momento de crear el registro,
+    // incluso si el usuario cambió el selector o no presionó "Alistar".
+    inyectarContextoEnRegistro(pending);
 
     addRegistro(pending);
     setNotice(`<strong>Guardado.</strong> Puedes escanear el siguiente QR.`);
@@ -716,9 +805,10 @@ document.addEventListener("DOMContentLoaded", () => {
       "falta",
       "observacion",
       "syncedAt",
-      // === CONTEXTO (al final) ===
+      // === PASO 3: CONTEXTO ===
       "asignatura",
       "bloqueInicio",
+      "bloqueLabel",
       "horaInicioBloque",
       "contextoUpdatedAt",
     ];
@@ -740,6 +830,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // CONTEXTO
           r.asignatura || "",
           r.bloqueInicio || "",
+          r.bloqueLabel || "",
           r.horaInicioBloque || "",
           r.contextoUpdatedAt || "",
         ])
@@ -763,18 +854,24 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((r) => {
         const chips = [];
 
-        // === CONTEXTO (primero) ===
-        if (r.asignatura && r.asignatura !== "-") {
-          chips.push(`<span class="chip">${escapeHtml(r.asignatura)}</span>`);
+        // === PASO 3: chips de contexto (primero) ===
+        const asig = r.asignatura || "";
+        const bloq = r.bloqueInicio || "";
+        const bloqLabel = r.bloqueLabel || "";
+        const t0 = r.horaInicioBloque || "";
+
+        if (asig && asig !== "-") {
+          chips.push(`<span class="chip">${escapeHtml(asig)}</span>`);
         }
-        if (r.bloqueInicio) {
-          chips.push(`<span class="chip">Inicio: ${escapeHtml(r.bloqueInicio)}°</span>`);
+        if (bloqLabel || bloq) {
+          const txt = bloqLabel || `${bloq}°`;
+          chips.push(`<span class="chip">Inicio: ${escapeHtml(txt)}</span>`);
         }
-        if (r.horaInicioBloque) {
-          chips.push(`<span class="chip">T0: ${escapeHtml(r.horaInicioBloque)}</span>`);
+        if (t0) {
+          chips.push(`<span class="chip">T0: ${escapeHtml(t0)}</span>`);
         }
 
-        // === TIPO ===
+        // chips existentes
         chips.push(
           `<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`
         );
