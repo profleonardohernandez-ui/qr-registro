@@ -52,6 +52,7 @@
       border-radius:12px;
       color:var(--text);
       outline:none;
+      font-size:16px; /* evita zoom iPhone */
     }
     .btn{
       padding:10px 12px;
@@ -102,6 +103,9 @@
     .when{color:var(--muted);font-size:12px}
     .code{font-weight:800}
     .obs{margin-top:6px;color:var(--muted);font-size:12px}
+
+    /* Contexto */
+    .context-card{border-left:4px solid #3b82f6;}
   </style>
 </head>
 
@@ -110,16 +114,61 @@
     <header>
       <div>
         <h1>QR Profe — Registro</h1>
-        <div class="small">Versión estable (sin contexto)</div>
+        <div class="small">Versión estable + Paso 1 (UI Contexto)</div>
       </div>
     </header>
 
-    <div class="grid">
+    <!-- ✅ PASO 1: Panel Contexto (solo UI; no afecta registros) -->
+    <section class="card context-card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="card-title">Contexto de sesión</div>
+          <div id="contextoActivo" class="small">Contexto activo: (sin configurar)</div>
+        </div>
+        <button id="btnContextoToggle" class="btn btn-ghost" type="button">🎛 Contexto</button>
+      </div>
+
+      <div id="panelContexto" class="row" style="margin-top:12px;" hidden>
+        <div class="field">
+          <label for="contextoAsignatura"><b>Asignatura / Grupo</b></label>
+          <select id="contextoAsignatura" class="input-std">
+            <option value="">-- Seleccionar --</option>
+            <option value="Economía 11°A">Economía 11°A</option>
+            <option value="Economía 11°B">Economía 11°B</option>
+            <option value="Filosofía 11°A">Filosofía 11°A</option>
+            <option value="Filosofía 11°B">Filosofía 11°B</option>
+            <option value="Economía 10°A">Economía 10°A</option>
+            <option value="Filosofía 10°A">Filosofía 10°A</option>
+            <option value="C. Sociales 6°A">C. Sociales 6°A</option>
+            <option value="C. Sociales 6°B">C. Sociales 6°B</option>
+            <option value="C. Sociales POS">C. Sociales POS</option>
+            <option value="EVENTO">EVENTO</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="contextoBloque"><b>Hora-clase de inicio</b></label>
+          <select id="contextoBloque" class="input-std">
+            <option value="">-- Seleccionar (1° a 8°) --</option>
+            <option value="1">1°</option><option value="2">2°</option>
+            <option value="3">3°</option><option value="4">4°</option>
+            <option value="5">5°</option><option value="6">6°</option>
+            <option value="7">7°</option><option value="8">8°</option>
+          </select>
+          <div id="contextoT0Hint" class="small" style="margin-top:6px;">T0: —</div>
+        </div>
+
+        <div class="row" style="align-items:flex-end;">
+          <button id="btnContextoGuardar" class="btn btn-primary" type="button">✅ Alistar</button>
+          <button id="btnContextoLimpiar" class="btn btn-ghost" type="button">🧹 Limpiar</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid" style="margin-top:12px;">
 
       <!-- IZQUIERDA -->
       <div>
-
-        <!-- ESCÁNER -->
         <section class="card">
           <div class="card-title">Escáner</div>
           <div class="small" style="margin-bottom:10px;">Inicia el escáner y apunta al QR del estudiante.</div>
@@ -133,13 +182,10 @@
 
           <div id="notice" class="notice">Listo.</div>
         </section>
-
       </div>
 
       <!-- DERECHA -->
       <div>
-
-        <!-- REGISTRO -->
         <section class="card">
           <div class="card-title">Registro</div>
           <div class="small">Cuando se detecta un QR, completa el evento y guarda.</div>
@@ -202,7 +248,6 @@
           </form>
         </section>
 
-        <!-- EXPORTACIÓN / SYNC -->
         <section class="card">
           <div class="card-title">Exportación</div>
           <div class="small" style="margin-bottom:10px;">Exporta o sincroniza los registros.</div>
@@ -214,7 +259,6 @@
           </div>
         </section>
 
-        <!-- HISTORIAL (obligatorio para este app.js) -->
         <section class="card">
           <div class="row" style="justify-content:space-between;align-items:center;">
             <div class="card-title">Historial</div>
@@ -224,7 +268,6 @@
             <div class="empty">Aún no hay registros.</div>
           </div>
         </section>
-
       </div>
     </div>
   </div>
@@ -232,7 +275,50 @@
   <!-- ✅ Librería QR (local) -->
   <script src="./html5-qrcode.min.js"></script>
 
-  <!-- ✅ Tu JS estable -->
+  <!-- ✅ Tu JS estable (sin tocar) -->
   <script src="./app.20260212-07.js"></script>
+
+  <!-- ✅ Paso 1: script UI de contexto (NO toca registros, NO toca scanner) -->
+  <script>
+    (function(){
+      const toggleBtn = document.getElementById("btnContextoToggle");
+      const panel = document.getElementById("panelContexto");
+      const selAsig = document.getElementById("contextoAsignatura");
+      const selBloq = document.getElementById("contextoBloque");
+      const btnOk = document.getElementById("btnContextoGuardar");
+      const btnClr = document.getElementById("btnContextoLimpiar");
+      const activo = document.getElementById("contextoActivo");
+      const t0Hint = document.getElementById("contextoT0Hint");
+
+      if (!toggleBtn || !panel || !selAsig || !selBloq || !btnOk || !btnClr || !activo || !t0Hint) return;
+
+      function setActiveText(a, b){
+        const asig = a || "(sin asignatura)";
+        const bloq = b || "(sin bloque)";
+        activo.textContent = `Contexto activo: ${asig} · Inicio: ${bloq}`;
+      }
+
+      toggleBtn.addEventListener("click", () => {
+        panel.hidden = !panel.hidden;
+      });
+
+      btnOk.addEventListener("click", () => {
+        setActiveText(selAsig.value, selBloq.value ? (selBloq.value + "°") : "");
+        t0Hint.textContent = "T0: —";
+        // Nota: Paso 1 NO guarda ni inyecta; solo UI.
+        panel.hidden = true;
+      });
+
+      btnClr.addEventListener("click", () => {
+        selAsig.value = "";
+        selBloq.value = "";
+        setActiveText("", "");
+        t0Hint.textContent = "T0: —";
+      });
+
+      // Estado inicial
+      setActiveText("", "");
+    })();
+  </script>
 </body>
 </html>
