@@ -2,8 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1220" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>QR Profe — Registro</title>
 
   <style>
@@ -20,337 +19,378 @@
       --warn:#ffcc66;
       --ok:#3ddc97;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius:18px;
+      --radius: 18px;
+      --radius2: 24px;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
     body{
       margin:0;
-      background:radial-gradient(1200px 600px at 30% -10%, rgba(79,140,255,.18), transparent 60%),
-                 radial-gradient(900px 500px at 100% 0%, rgba(61,220,151,.10), transparent 55%),
-                 var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% -20%, rgba(79,140,255,.22), transparent 60%),
+                  radial-gradient(900px 700px at 120% 20%, rgba(61,220,151,.12), transparent 55%),
+                  var(--bg);
       color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      padding:18px 14px 40px;
+      min-height:100vh;
     }
-
-    .wrap{max-width:920px;margin:0 auto}
 
     header{
-      display:flex; align-items:flex-end; justify-content:space-between;
-      gap:14px; margin-bottom:14px;
+      padding:18px 18px 8px;
+      max-width:1100px;
+      margin:0 auto;
     }
-    .brand h1{margin:0;font-size:18px;letter-spacing:.2px}
-    .brand .sub{margin-top:4px;color:var(--muted);font-size:12px}
-
-    .pill{
-      display:inline-flex; gap:8px; align-items:center;
-      padding:6px 10px; border:1px solid var(--line); border-radius:999px;
-      background:rgba(255,255,255,.04); color:var(--muted); font-size:12px;
-      white-space:nowrap;
+    header h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+    header .sub{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:13px;
     }
 
-    .grid{
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:12px 18px 40px;
       display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
+      gap:14px;
+      grid-template-columns: 1.25fr .9fr;
     }
-    @media(min-width:900px){
-      .grid{ grid-template-columns: 1.1fr .9fr; }
+    @media (max-width: 960px){
+      .wrap{ grid-template-columns: 1fr; }
     }
 
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
       border:1px solid var(--line);
-      border-radius: var(--radius);
+      border-radius: var(--radius2);
       box-shadow: var(--shadow);
-      padding:14px;
+      overflow:hidden;
     }
+    .card-inner{ padding:18px; }
     .card-title{
-      font-weight:800;
-      font-size:13px;
-      letter-spacing:.2px;
-      margin-bottom:10px;
-      display:flex; align-items:center; justify-content:space-between;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
       gap:10px;
+      font-weight:800;
+      letter-spacing:.2px;
+      margin:0 0 10px;
+      font-size:16px;
     }
-    .small{font-size:12px;color:var(--muted);line-height:1.35}
-    .row{display:flex; gap:10px; flex-wrap:wrap}
-    .field{display:grid; gap:6px; min-width:180px; flex:1}
-    label{font-size:12px;color:var(--muted)}
-    .input-std{
+    .hint{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+      margin:0 0 14px;
+    }
+
+    .row{ display:flex; gap:12px; flex-wrap:wrap; }
+    .field{
+      display:grid;
+      gap:6px;
+      min-width:220px;
+      flex:1;
+    }
+    label{
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.2px;
+    }
+    select,input,textarea{
       width:100%;
-      border:1px solid var(--line);
-      border-radius:12px;
+      font-size:16px;
       padding:12px 12px;
-      font-size:16px; /* evita zoom iPhone */
-      background:rgba(0,0,0,.25);
-      color:var(--text);
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
       outline:none;
     }
-    select.input-std{padding-right:34px}
+    textarea{ min-height:88px; resize:vertical; }
 
-    .btn{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      font-weight:700;
-      cursor:pointer;
-      transition: transform .05s ease, background .15s ease;
-      user-select:none;
-    }
-    .btn:active{transform: translateY(1px)}
-    .btn.primary{
-      background:linear-gradient(180deg, rgba(79,140,255,.95), rgba(58,115,255,.85));
-      border-color: rgba(79,140,255,.35);
-    }
-    .btn.danger{
-      background:linear-gradient(180deg, rgba(255,79,100,.85), rgba(255,79,100,.65));
-      border-color: rgba(255,79,100,.35);
-    }
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-
-    #notice{
-      border:1px dashed rgba(255,255,255,.15);
-      background:rgba(255,255,255,.04);
-      padding:10px 12px;
-      border-radius:12px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.35;
-      margin-top:10px;
-    }
-
-    #qr-reader{
-      width:100%;
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; }
+    button{
+      border:0;
       border-radius:14px;
-      overflow:hidden;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.25);
-      margin-top:10px;
+      padding:12px 14px;
+      font-size:15px;
+      cursor:pointer;
+      color:#fff;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
     }
+    button.primary{
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      border-color: rgba(255,255,255,.12);
+      font-weight:700;
+    }
+    button.danger{
+      background: rgba(255,79,100,.20);
+      border-color: rgba(255,79,100,.35);
+      color:#ffd7dc;
+      font-weight:700;
+    }
+    button:disabled{ opacity:.6; cursor:not-allowed; }
 
-    .kpis{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-      margin-top:10px;
-    }
-    .kpi{
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
       padding:8px 10px;
+      border-radius:999px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      border-radius:12px;
-      font-size:12px;
+      background: rgba(0,0,0,.22);
       color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
     }
-    .kpi strong{color:var(--text)}
 
-    .list{
+    .notice{
+      margin-top:10px;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.3;
+    }
+
+    /* Historial */
+    .hist{
       display:grid;
       gap:10px;
       margin-top:10px;
     }
     .item{
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:10px 12px;
-      background:rgba(0,0,0,.18);
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
     }
     .item-top{
-      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
-      flex-wrap:wrap;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      margin-bottom:8px;
     }
-    .chips{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+    .chips{ display:flex; gap:6px; flex-wrap:wrap; }
     .chip{
-      font-size:12px;
-      padding:4px 8px;
+      padding:5px 9px;
       border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-    }
-    .tipo-tarde{border-color:rgba(255,204,102,.35); background:rgba(255,204,102,.10)}
-    .tipo-convivencia{border-color:rgba(255,79,100,.35); background:rgba(255,79,100,.10)}
-    .tipo-inasistencia{border-color:rgba(79,140,255,.35); background:rgba(79,140,255,.10)}
-    .when{color:var(--muted);font-size:12px}
-    .code{margin-top:6px;color:var(--text);font-weight:800;letter-spacing:.1px}
-    .obs{margin-top:8px;color:var(--muted);font-size:13px;white-space:pre-wrap}
-
-    .empty{
-      padding:12px;
-      border:1px dashed rgba(255,255,255,.15);
-      border-radius:14px;
-      color:var(--muted);
-      font-size:13px;
-      text-align:center;
-    }
-
-    /* Card especial de contexto (la que te gustó) */
-    .ctx{
-      border-left: 4px solid rgba(79,140,255,.9);
-      background:linear-gradient(180deg, rgba(79,140,255,.10), rgba(255,255,255,.03));
-    }
-    .ctx .preview{
-      display:grid; gap:4px; margin-top:10px;
-      padding:10px 12px; border-radius:14px;
       border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.18);
+      background: rgba(255,255,255,.06);
+      font-size:12px;
+      color:#eaf0ff;
     }
-    .ctx .preview .p{font-size:12px;color:var(--muted)}
-    .ctx .preview .p strong{color:var(--text)}
+    .tipo-inasistencia{ border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.12); }
+    .tipo-tarde{ border-color: rgba(79,140,255,.35); background: rgba(79,140,255,.14); }
+    .tipo-convivencia{ border-color: rgba(255,79,100,.35); background: rgba(255,79,100,.12); }
+    .when{ color:var(--muted); font-size:12px; white-space:nowrap; }
+    .code{ font-weight:800; letter-spacing:.2px; font-size:14px; margin-bottom:4px; }
+    .obs{ color:var(--muted); font-size:13px; }
+
+    /* Scanner area placeholder */
+    #qr-reader{
+      width:100%;
+      min-height:240px;
+      border-radius:18px;
+      border:1px dashed rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      display:none;
+      overflow:hidden;
+    }
+
+    .two-col{
+      display:grid;
+      gap:14px;
+      grid-template-columns: 1fr;
+    }
+
+    .rule{
+      display:flex;
+      justify-content:flex-end;
+      padding:0 18px 0;
+      max-width:1100px;
+      margin:0 auto;
+    }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">
+  <header>
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:10px;">
+      <div>
         <h1>QR Profe — Registro</h1>
         <div class="sub">Offline-first • Escaneo rápido • Sincronización por lote</div>
       </div>
       <div class="pill">📌 Regla de oro: no tocar lo que ya funciona</div>
-    </header>
+    </div>
+  </header>
 
-    <!-- 0) CONTEXTO DE SESIÓN -->
-    <section class="card ctx">
-      <div class="card-title">
-        <span>0) Contexto de sesión</span>
-        <button id="alistarBtn" class="btn primary" type="button">✅ Alistar</button>
-      </div>
-      <div class="small">Elige Asignatura/Grupo y Hora-clase inicio (1–8). Descanso y almuerzo no se manejan como bloques en la app.</div>
+  <div class="wrap">
+    <!-- Columna izquierda -->
+    <div class="two-col">
+      <!-- 0) Contexto -->
+      <section class="card" style="border-left:4px solid rgba(79,140,255,.9);">
+        <div class="card-inner">
+          <div class="card-title">
+            <span>0) Contexto de sesión</span>
+            <button id="btnAlistar" class="primary">✅ Alistar</button>
+          </div>
+          <p class="hint">
+            Elige Asignatura/Grupo y Hora-clase inicio (1–8). Descanso y almuerzo no se manejan como bloques en la app.
+          </p>
 
-      <div class="row" style="margin-top:10px;">
-        <div class="field" style="min-width:220px;">
-          <label for="contextoClase"><strong>Asignatura / Grupo</strong></label>
-          <select id="contextoClase" class="input-std">
-            <option value="">— Seleccionar —</option>
-            <option value="Economía 11°A">Economía 11°A</option>
-            <option value="Economía 11°B">Economía 11°B</option>
-            <option value="Filosofía 11°A">Filosofía 11°A</option>
-            <option value="Filosofía 11°B">Filosofía 11°B</option>
-            <option value="Economía 10°A">Economía 10°A</option>
-            <option value="Filosofía 10°A">Filosofía 10°A</option>
-            <option value="C. Sociales 6°A">C. Sociales 6°A</option>
-            <option value="C. Sociales 6°B">C. Sociales 6°B</option>
-            <option value="C. Sociales POS">C. Sociales POS</option>
-            <option value="EVENTO">Evento / Izada de bandera</option>
-          </select>
-        </div>
-
-        <div class="field" style="min-width:220px;">
-          <label for="horaClaseInicio"><strong>Hora-clase inicio</strong></label>
-          <select id="horaClaseInicio" class="input-std">
-            <option value="">— Seleccionar —</option>
-            <option value="1">1° (07:00 - 07:54)</option>
-            <option value="2">2° (07:54 - 08:48)</option>
-            <option value="3">3° (08:48 - 09:42)</option>
-            <option value="4">4° (09:52 - 10:46)</option>
-            <option value="5">5° (10:46 - 11:40)</option>
-            <option value="6">6° (12:06 - 13:00)</option>
-            <option value="7">7° (13:00 - 13:54)</option>
-            <option value="8">8° (13:54 - 14:48)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="preview" aria-live="polite">
-        <div class="p" id="ctxAsig">Asignatura: —</div>
-        <div class="p" id="ctxInicio">Inicio: —</div>
-        <div class="p"><strong id="ctxT0">T0 - —</strong></div>
-      </div>
-    </section>
-
-    <div class="grid">
-      <!-- OPERACIÓN: ESCANEO + FORM -->
-      <section class="card">
-        <div class="card-title">1) Escaneo y registro</div>
-
-        <div class="row" style="align-items:center;">
-          <button id="scanBtn" class="btn primary" type="button">📷 Escanear QR</button>
-          <button id="cancelScanBtn" class="btn" type="button" style="display:none;">✋ Cancelar</button>
-        </div>
-
-        <div id="qr-reader"></div>
-
-        <div id="notice">Listo. Presiona <strong>Escanear QR</strong>.</div>
-
-        <div class="kpis">
-          <div class="kpi"><strong id="codigoActual">Código: —</strong></div>
-          <div class="kpi"><strong id="horaActual">Hora: —</strong></div>
-        </div>
-
-        <form id="formEvento" style="display:none; margin-top:12px;">
           <div class="row">
             <div class="field">
-              <label for="tipo"><strong>Tipo de registro</strong></label>
-              <select id="tipo" class="input-std">
-                <option value="INASISTENCIA">INASISTENCIA</option>
-                <option value="TARDE">TARDE</option>
-                <option value="CONVIVENCIA">CONVIVENCIA</option>
+              <label>Asignatura / Grupo</label>
+              <select id="contextoClase">
+                <option value="">— seleccionar —</option>
+                <option value="Economía 11°A">Economía 11°A</option>
+                <option value="Economía 11°B">Economía 11°B</option>
+                <option value="Filosofía 11°A">Filosofía 11°A</option>
+                <option value="Filosofía 11°B">Filosofía 11°B</option>
+                <option value="Economía 10°A">Economía 10°A</option>
+                <option value="Filosofía 10°A">Filosofía 10°A</option>
+                <option value="C. Sociales 6°A">C. Sociales 6°A</option>
+                <option value="C. Sociales 6°B">C. Sociales 6°B</option>
+                <option value="C. Sociales POS">C. Sociales POS</option>
+                <option value="EVENTO">Evento / Izada Bandera</option>
               </select>
             </div>
 
-            <div class="field" id="wrapExcusa" style="min-width:200px; display:none;">
-              <label for="excusa"><strong>Excusa</strong></label>
-              <select id="excusa" class="input-std">
-                <option value="SIN_EXCUSA">SIN_EXCUSA</option>
-                <option value="CON_EXCUSA">CON_EXCUSA</option>
+            <div class="field">
+              <label>Hora-clase inicio</label>
+              <select id="horaClaseInicio">
+                <option value="">— seleccionar —</option>
+                <option value="1">1° (07:00 - 07:54)</option>
+                <option value="2">2° (07:54 - 08:48)</option>
+                <option value="3">3° (08:48 - 09:42)</option>
+                <option value="4">4° (09:52 - 10:46)</option>
+                <option value="5">5° (10:46 - 11:40)</option>
+                <option value="6">6° (12:06 - 13:00)</option>
+                <option value="7">7° (13:00 - 13:54)</option>
+                <option value="8">8° (13:54 - 14:48)</option>
               </select>
-            </div>
-
-            <div class="field" id="wrapNivel" style="min-width:200px; display:none;">
-              <label for="nivel"><strong>Nivel</strong></label>
-              <select id="nivel" class="input-std">
-                <option value="TIPO_I">TIPO_I</option>
-                <option value="TIPO_II">TIPO_II</option>
-                <option value="TIPO_III">TIPO_III</option>
-              </select>
-            </div>
-
-            <div class="field" id="wrapFalta" style="min-width:320px; display:none;">
-              <label for="falta"><strong>Falta</strong></label>
-              <select id="falta" class="input-std"></select>
-            </div>
-
-            <div class="field" id="wrapFaltaOtra" style="min-width:320px; display:none;">
-              <label for="faltaOtra"><strong>Otra falta (guardar nueva)</strong></label>
-              <input id="faltaOtra" class="input-std" placeholder="Escribe la falta..." />
-            </div>
-
-            <div class="field" id="wrapObsTipo" style="min-width:320px; display:none;">
-              <label for="obsTipo"><strong>Observación tipo (Tarde)</strong></label>
-              <select id="obsTipo" class="input-std"></select>
-            </div>
-
-            <div class="field" style="min-width:320px;">
-              <label for="obs"><strong>Observación</strong></label>
-              <input id="obs" class="input-std" placeholder="(Opcional)" />
             </div>
           </div>
 
-          <div class="row" style="margin-top:10px;">
-            <button id="guardarBtn" class="btn primary" type="button">💾 Guardar</button>
+          <div class="notice" id="ctxPreview">
+            Asignatura: <span id="ctxPreviewAsig">—</span><br/>
+            Inicio: <span id="ctxPreviewBloq">—</span><br/>
+            <strong>T0</strong> - <span id="ctxPreviewT0">—</span>
           </div>
-        </form>
+        </div>
       </section>
 
-      <!-- HISTORIAL + ACCIONES -->
+      <!-- 1) Escaneo -->
       <section class="card">
-        <div class="card-title">2) Historial y acciones</div>
+        <div class="card-inner">
+          <div class="card-title">
+            <span>1) Escaneo y registro</span>
+          </div>
 
-        <div class="row">
-          <button id="syncBtn" class="btn" type="button">☁️ Sincronizar a Google Sheets</button>
-          <button id="exportarBtn" class="btn" type="button">⬇️ Exportar CSV</button>
-          <button id="limpiarBtn" class="btn danger" type="button">🧹 Limpiar</button>
+          <div class="btns">
+            <button id="scanBtn" class="primary">📷 Escanear QR</button>
+            <button id="cancelScanBtn" style="display:none;">⏸️ Detener</button>
+          </div>
+
+          <div class="notice" id="notice">
+            Esperando lectura de QR...
+          </div>
+
+          <div style="display:flex; gap:14px; margin-top:12px; flex-wrap:wrap;">
+            <div class="pill" id="codigoActual">Código: —</div>
+            <div class="pill" id="horaActual">Hora: —</div>
+          </div>
+
+          <div id="qr-reader" style="margin-top:14px;"></div>
+
+          <!-- Form evento -->
+          <div id="formEvento" style="display:none; margin-top:14px;">
+            <div class="row">
+              <div class="field" style="min-width:160px;">
+                <label>Tipo</label>
+                <select id="tipo">
+                  <option value="INASISTENCIA">INASISTENCIA</option>
+                  <option value="TARDE">TARDE</option>
+                  <option value="CONVIVENCIA">CONVIVENCIA</option>
+                </select>
+              </div>
+
+              <div class="field" id="wrapExcusa" style="min-width:160px;">
+                <label>Excusa</label>
+                <select id="excusa">
+                  <option value="SIN_EXCUSA">SIN_EXCUSA</option>
+                  <option value="CON_EXCUSA">CON_EXCUSA</option>
+                </select>
+              </div>
+
+              <div class="field" id="wrapNivel" style="min-width:160px; display:none;">
+                <label>Clasificación</label>
+                <select id="nivel">
+                  <option value="TIPO_I">TIPO_I</option>
+                  <option value="TIPO_II">TIPO_II</option>
+                  <option value="TIPO_III">TIPO_III</option>
+                </select>
+              </div>
+
+              <div class="field" id="wrapFalta" style="min-width:220px; display:none;">
+                <label>Falta</label>
+                <select id="falta"></select>
+              </div>
+
+              <div class="field" id="wrapFaltaOtra" style="min-width:220px; display:none;">
+                <label>Otra falta (guardar nueva)</label>
+                <input id="faltaOtra" placeholder="Escribe la nueva falta..." />
+              </div>
+
+              <div class="field" id="wrapObsTipo" style="min-width:220px; display:none;">
+                <label>Observación tipo (tarde)</label>
+                <select id="obsTipo"></select>
+              </div>
+
+              <div class="field" style="min-width:260px; flex:2;">
+                <label>Observación</label>
+                <input id="obs" placeholder="Escribe una observación breve..." />
+              </div>
+            </div>
+
+            <div class="btns" style="margin-top:12px;">
+              <button id="guardarBtn" class="primary">💾 Guardar</button>
+            </div>
+          </div>
         </div>
+      </section>
+    </div>
 
-        <div class="kpis">
-          <div class="kpi">Registros en dispositivo: <strong id="totalReg">0</strong></div>
+    <!-- Columna derecha -->
+    <div class="two-col">
+      <!-- Exportación / Acciones -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">2) Historial y acciones</div>
+
+          <div class="btns">
+            <button id="syncBtn">☁️ Sincronizar a Google Sheets</button>
+            <button id="exportarBtn">⬇️ Exportar CSV</button>
+          </div>
+
+          <div class="btns" style="margin-top:10px;">
+            <button id="limpiarBtn" class="danger">🧹 Limpiar</button>
+          </div>
+
+          <div class="notice" style="margin-top:12px;">
+            Registros en dispositivo: <strong id="totalReg">0</strong>
+          </div>
+
+          <div class="hist" id="historial"></div>
         </div>
-
-        <div class="list" id="historial"></div>
       </section>
     </div>
   </div>
@@ -358,14 +398,10 @@
   <!-- Librería cámara -->
   <script src="./html5-qrcode.min.js"></script>
 
-  <!-- Panel de contexto (guarda en localStorage) -->
+  <!-- Contexto (controlado en index, persistido en localStorage) -->
   <script>
     (function(){
       const KEY_CTX = "qr_contexto_sesion_v1";
-
-      // Horario real: 54 min por hora-clase.
-      // Ajuste solicitado:
-      // 6° inicia 12:06 p.m., 7° 1:00 p.m., 8° 1:54 p.m.
       const BLOQUE_T0 = {
         "1":"07:00:00",
         "2":"07:54:00",
@@ -379,50 +415,40 @@
 
       const selAsig = document.getElementById("contextoClase");
       const selBloq = document.getElementById("horaClaseInicio");
-      const btnAlistar = document.getElementById("alistarBtn");
+      const btn = document.getElementById("btnAlistar");
 
-      const pAsig = document.getElementById("ctxAsig");
-      const pIni  = document.getElementById("ctxInicio");
-      const pT0   = document.getElementById("ctxT0");
+      const pAsig = document.getElementById("ctxPreviewAsig");
+      const pBloq = document.getElementById("ctxPreviewBloq");
+      const pT0 = document.getElementById("ctxPreviewT0");
 
-      function toAMPM(hhmmss){
-        const parts = String(hhmmss || "").split(":");
-        const h = Number(parts[0] || 0);
-        const m = String(parts[1]||"00").padStart(2,"0");
-        const ampm = h >= 12 ? "p.m." : "a.m.";
-        const h12 = ((h + 11) % 12) + 1;
-        return `${h12}:${m} ${ampm}`;
-      }
-
-      function safeParse(raw){
-        try{ return JSON.parse(raw); } catch { return null; }
+      function safeParseJSON(raw, fallback){
+        try{ const v = JSON.parse(raw); return v ?? fallback; }catch{ return fallback; }
       }
 
       function refreshPreview(){
-        const asig = selAsig.value || "—";
-        const bloq = selBloq.value || "—";
-        const t0 = BLOQUE_T0[selBloq.value] || "";
+        const asig = (selAsig.value || "").trim();
+        const bloque = (selBloq.value || "").trim();
+        const t0 = BLOQUE_T0[bloque] || "";
 
-        pAsig.textContent = `Asignatura: ${asig}`;
-        pIni.textContent  = bloq === "—" ? "Inicio: —" : `Inicio: ${bloq}°`;
-        pT0.textContent   = t0 ? `T0 - ${toAMPM(t0)} (${t0})` : "T0 - —";
+        pAsig.textContent = asig || "—";
+        pBloq.textContent = bloque ? (selBloq.options[selBloq.selectedIndex].textContent || bloque) : "—";
+        pT0.textContent = t0 ? (t0 + " (" + (t0) + ")") : "—";
       }
 
       function cargarContexto(){
         const raw = localStorage.getItem(KEY_CTX);
-        if(!raw) { refreshPreview(); return; }
-        const ctx = safeParse(raw);
-        if(!ctx || typeof ctx !== "object") { refreshPreview(); return; }
-
-        if(typeof ctx.asignatura === "string") selAsig.value = ctx.asignatura;
-        if(typeof ctx.bloque === "string") selBloq.value = ctx.bloque;
+        const ctx = raw ? safeParseJSON(raw, null) : null;
+        if(ctx && ctx.asignatura && ctx.bloque){
+          selAsig.value = ctx.asignatura;
+          selBloq.value = String(ctx.bloque);
+        }
         refreshPreview();
       }
 
       selAsig.addEventListener("change", refreshPreview);
       selBloq.addEventListener("change", refreshPreview);
 
-      btnAlistar.addEventListener("click", () => {
+      btn.addEventListener("click", () => {
         const asignatura = (selAsig.value || "").trim();
         const bloque = (selBloq.value || "").trim();
 
@@ -445,6 +471,6 @@
   </script>
 
   <!-- App principal -->
-  <script src="./app.20260212-07.js"></script>
+  <script src="./app.20260212-07.js?v=ctxfix2"></script>
 </body>
 </html>
