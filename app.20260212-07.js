@@ -40,8 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Storage ---
   const KEY = "registros_qr_v1";
-  // === PASO 3: Contexto inyectado en registro (LOCAL + CSV) ===
-  const KEY_CTX = "qr_contexto_sesion_v1";
+
+  // === CONTEXTO (PASO 3) — robusto, sin duplicaciones ===
+  const KEY_CTX_PRIMARY = "qr_contexto_sesion_v1";
+  const KEY_CTX_FALLBACKS = ["qr_contexto_sesion", "qr_contexto_sesion_v0"];
+
   const BLOQUE_T0_24H = {
     "1": "07:00:00",
     "2": "07:54:00",
@@ -53,35 +56,23 @@ document.addEventListener("DOMContentLoaded", () => {
     "8": "14:08:00",
   };
 
-  function getContextoSesion() {
-    const raw = localStorage.getItem(KEY_CTX);
-    const ctx = raw ? safeParseJSON(raw, null) : null;
+  // (Opcional) si tu HTML tiene un span/div donde mostrar T0 “bonito”
+  const ctxT0LabelEl =
+    document.getElementById("ctxT0Label") ||
+    document.getElementById("t0Label") ||
+    document.getElementById("ctxT0");
 
-    const asignatura = ctx && typeof ctx.asignatura === "string" ? ctx.asignatura.trim() : "";
-    const bloqueInicio = ctx && typeof ctx.bloque === "string" ? ctx.bloque.trim() : "";
-    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
-    const contextoUpdatedAt = ctx && typeof ctx.updatedAt === "string" ? ctx.updatedAt : "";
+  // Intentamos detectar IDs típicos del HTML (compatibles con tus versiones previas)
+  const ctxAsignaturaEl =
+    document.getElementById("contextoClase") ||
+    document.getElementById("ctxAsignatura") ||
+    document.getElementById("asignaturaGrupo");
 
-    return { asignatura, bloqueInicio, horaInicioBloque, contextoUpdatedAt };
-  }
-  // === /PASO 3 ===
-  // === Google Sheets Sync ===
-  const SHEETS_WEBAPP_URL =
-    "https://script.google.com/macros/s/AKfycbzbbTA4VFxI8hv2qNqZWaBgMOwrc22lmf1-MSv7Y5uf_gey96Fxbz_HJC2vP-7TO6s/exec";
-  const KEY_DEVICE_ID = "qr_device_id_v1";
-
-  // ===== PASO 3: Contexto (solo inyección en registro local + CSV) =====
-  const KEY_CTX = "qr_contexto_sesion_v1";
-  const BLOQUE_T0_24H = {
-    "1": "07:00:00",
-    "2": "07:54:00",
-    "3": "08:48:00",
-    "4": "09:52:00",
-    "5": "10:46:00",
-    "6": "11:40:00",
-    "7": "13:14:00",
-    "8": "14:08:00",
-  };
+  const ctxBloqueEl =
+    document.getElementById("horaClaseInicio") ||
+    document.getElementById("bloqueHorario") ||
+    document.getElementById("ctxBloque") ||
+    document.getElementById("bloqueInicio");
 
   function safeParseJSON(raw, fallback) {
     try {
@@ -92,43 +83,104 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function getContextoSesion() {
-    const raw = localStorage.getItem(KEY_CTX);
-    if (!raw) {
-      return {
-        asignatura: "",
-        bloqueInicio: "",
-        horaInicioBloque: "",
-        contextoUpdatedAt: "",
-      };
+  function readContextoRawFromStorage() {
+    for (const k of [KEY_CTX_PRIMARY, ...KEY_CTX_FALLBACKS]) {
+      const raw = localStorage.getItem(k);
+      if (raw) return raw;
     }
+    return "";
+  }
+
+  function persistContextoToStorage(ctx) {
+    try {
+      localStorage.setItem(KEY_CTX_PRIMARY, JSON.stringify(ctx));
+    } catch {
+      // si el storage falla, NO rompemos el flujo
+    }
+  }
+
+  function readContextoFromUI() {
+    const asignatura = ctxAsignaturaEl ? String(ctxAsignaturaEl.value || "").trim() : "";
+    const bloqueInicio = ctxBloqueEl ? String(ctxBloqueEl.value || "").trim() : "";
+    if (!asignatura && !bloqueInicio) return null;
+    return { asignatura, bloqueInicio };
+  }
+
+  function readContextoFromStorage() {
+    const raw = readContextoRawFromStorage();
+    if (!raw) return { asignatura: "", bloqueInicio: "", contextoUpdatedAt: "" };
+
     const ctx = safeParseJSON(raw, null);
     if (!ctx || typeof ctx !== "object") {
-      return {
-        asignatura: "",
-        bloqueInicio: "",
-        horaInicioBloque: "",
-        contextoUpdatedAt: "",
-      };
+      return { asignatura: "", bloqueInicio: "", contextoUpdatedAt: "" };
     }
 
-    const asignatura = typeof ctx.asignatura === "string" ? ctx.asignatura.trim() : "";
-    const bloqueInicio = typeof ctx.bloque === "string" ? ctx.bloque.trim() : "";
-    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
+    // tolerancia de nombres (por si una versión guardó otras llaves)
+    const asignatura =
+      (typeof ctx.asignatura === "string" && ctx.asignatura.trim()) ||
+      (typeof ctx.contextoClase === "string" && ctx.contextoClase.trim()) ||
+      "";
+
+    const bloqueRaw =
+      ctx.bloque ??
+      ctx.bloqueInicio ??
+      ctx.horaClaseInicio ??
+      ctx.bloqueHorario ??
+      "";
+
+    const bloqueInicio = String(bloqueRaw || "").trim();
     const contextoUpdatedAt = typeof ctx.updatedAt === "string" ? ctx.updatedAt : "";
+
+    return { asignatura, bloqueInicio, contextoUpdatedAt };
+  }
+
+  function getContextoSesion() {
+    const ui = readContextoFromUI();
+    const st = readContextoFromStorage();
+
+    const asignatura = (ui?.asignatura || st.asignatura || "").trim();
+    const bloqueInicio = String(ui?.bloqueInicio || st.bloqueInicio || "").trim();
+    const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
+    const contextoUpdatedAt = st.contextoUpdatedAt || "";
 
     return { asignatura, bloqueInicio, horaInicioBloque, contextoUpdatedAt };
   }
 
-  function inyectarContextoEnRegistro(reg) {
+  function refreshCtxT0Label() {
+    if (!ctxT0LabelEl) return;
     const c = getContextoSesion();
-    reg.asignatura = c.asignatura || "-";
-    reg.bloqueInicio = c.bloqueInicio || "";
-    reg.horaInicioBloque = c.horaInicioBloque || "";
-    reg.contextoUpdatedAt = c.contextoUpdatedAt || "";
-    return reg;
+    if (!c.horaInicioBloque) {
+      ctxT0LabelEl.textContent = "T0 -";
+      return;
+    }
+    // Mostramos “T0 - 7:00 a.m.” (simple, sin depender de i18n complejo)
+    const [hh, mm] = c.horaInicioBloque.split(":").map(Number);
+    const h12 = ((hh + 11) % 12) + 1;
+    const ampm = hh >= 12 ? "p.m." : "a.m.";
+    ctxT0LabelEl.textContent = `T0 - ${h12}:${String(mm).padStart(2, "0")} ${ampm}`;
   }
-  // ===== /PASO 3 =====
+
+  function onContextoChange() {
+    const c = getContextoSesion();
+    // persistimos (aunque venga de UI) para continuidad offline
+    persistContextoToStorage({
+      asignatura: c.asignatura,
+      bloque: c.bloqueInicio,
+      updatedAt: new Date().toISOString(),
+    });
+    refreshCtxT0Label();
+  }
+
+  // Si existen selectores, los escuchamos (no rompe si no existen)
+  if (ctxAsignaturaEl) ctxAsignaturaEl.addEventListener("change", onContextoChange);
+  if (ctxBloqueEl) ctxBloqueEl.addEventListener("change", onContextoChange);
+  refreshCtxT0Label();
+  // === /CONTEXTO ===
+
+  // === Google Sheets Sync ===
+  const SHEETS_WEBAPP_URL =
+    "https://script.google.com/macros/s/AKfycbzbbTA4VFxI8hv2qNqZWaBgMOwrc22lmf1-MSv7Y5uf_gey96Fxbz_HJC2vP-7TO6s/exec";
+  const KEY_DEVICE_ID = "qr_device_id_v1";
 
   // Observaciones tipo (Llegada tarde) — por defecto + personalizadas
   const KEY_OBS_TARDE = "obs_tipos_tarde_v1";
@@ -177,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "III.3 Agresión verbal/moral grave",
       "III.4 Sabotaje/protesta violenta",
       "III.5 Injuria/calumnia/publicación deshonrosa",
-      "III.6 Portar/consumir cigarrillo, vaper o SPA",
+      "III.6 Portar armas/objetos peligrosos",
       "III.7 Atentar contra salud/integridad",
       "III.8 Fraude/copia/plagio/falsificación",
       "III.9 Plagio/derechos de autor",
@@ -248,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
         obs: r.obs || "",
         syncedAt: r.syncedAt || "",
 
-        // PASO 3: campos de contexto (tolerantes a versiones viejas)
+        // Contexto (tolerante)
         asignatura: r.asignatura || "",
         bloqueInicio: r.bloqueInicio || "",
         horaInicioBloque: r.horaInicioBloque || "",
@@ -454,8 +506,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportedAt = new Date().toISOString();
     const deviceId = getDeviceId();
 
-    // ⚠️ PASO 3: mantenemos el payload EXACTO como estaba para no arriesgar compatibilidad del Apps Script.
-    // El contexto ya va en local + CSV. Más adelante hacemos el update del backend y del payload (Paso 4/5).
+    // ✅ Enviamos el payload original + contexto al final (claves extra NO rompen el JSON).
+    // Para que el Sheet muestre columnas, el Apps Script debe escribirlas.
     const records = pendingSync.map((r) => ({
       uid: makeUid(r),
       timestamp: r.timestamp || "",
@@ -468,6 +520,11 @@ document.addEventListener("DOMContentLoaded", () => {
       nivel: r.nivel || "",
       falta: r.falta || "",
       obs: r.obs || "",
+      // Contexto
+      asignatura: r.asignatura || "",
+      bloqueInicio: r.bloqueInicio || "",
+      horaInicioBloque: r.horaInicioBloque || "",
+      contextoUpdatedAt: r.contextoUpdatedAt || "",
     }));
 
     // UI lock
@@ -517,7 +574,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const syncedAt = new Date().toISOString();
         const updated = all.map((r) => {
           const uid = makeUid(r);
-          if (!r.syncedAt && uids.has(uid)) return { ...r, syncedAt };
+          if (!r.syncedAt && uids.has(uid)) return { ...r, syncedAt }; // ✅ FIX
           return r;
         });
         setRegistros(updated);
@@ -566,6 +623,10 @@ document.addEventListener("DOMContentLoaded", () => {
           cancelScanBtn.style.display = "none";
 
           const a = new Date();
+
+          // ✅ Snapshot de contexto EN EL MOMENTO DEL ESCANEO
+          const ctxSnap = getContextoSesion();
+
           pending = {
             codigo: codigoQR,
             fecha: a.toLocaleDateString(),
@@ -579,11 +640,12 @@ document.addEventListener("DOMContentLoaded", () => {
             obs: "",
             syncedAt: "",
 
-            // PASO 3: los campos se llenan al GUARDAR (no al escanear)
-            asignatura: "",
-            bloqueInicio: "",
-            horaInicioBloque: "",
-            contextoUpdatedAt: "",
+            // Contexto (snapshot)
+            asignatura: ctxSnap.asignatura ? ctxSnap.asignatura : "-",
+            bloqueInicio: ctxSnap.bloqueInicio || "",
+            horaInicioBloque: ctxSnap.horaInicioBloque || "",
+            contextoUpdatedAt: ctxSnap.contextoUpdatedAt || "",
+            _ctxSnapshot: ctxSnap, // interno
           };
 
           codigoActual.textContent = `Código: ${codigoQR}`;
@@ -717,14 +779,17 @@ document.addEventListener("DOMContentLoaded", () => {
       pending.falta = "";
     }
 
-    // ✅ PASO 3: inyectar contexto activo al guardar (no rompe si no hay contexto)
-    inyectarContextoEnRegistro(pending);
-    // ✅ PASO 3: Inyectar contexto activo (tolerante: no rompe si está vacío)
-    const ctx = getContextoSesion();
-    pending.asignatura = ctx.asignatura || "-";
+    // ✅ Contexto: usamos snapshot; si por alguna razón vino vacío, re-leemos.
+    const snap = pending._ctxSnapshot || null;
+    const ctx = snap && (snap.asignatura || snap.bloqueInicio) ? snap : getContextoSesion();
+    pending.asignatura = ctx.asignatura ? ctx.asignatura : "-";
     pending.bloqueInicio = ctx.bloqueInicio || "";
     pending.horaInicioBloque = ctx.horaInicioBloque || "";
     pending.contextoUpdatedAt = ctx.contextoUpdatedAt || "";
+
+    // limpiamos campo interno
+    delete pending._ctxSnapshot;
+
     addRegistro(pending);
     setNotice(`<strong>Guardado.</strong> Puedes escanear el siguiente QR.`);
     pending = null;
@@ -736,7 +801,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function exportarCSV() {
     const arr = getRegistros();
 
-    // ⚠️ Header original (sin romper) + campos de contexto al final
     const header = [
       "timestamp",
       "fechaISO",
@@ -749,7 +813,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "falta",
       "observacion",
       "syncedAt",
-      // PASO 3
+      // Contexto
       "asignatura",
       "bloqueInicio",
       "horaInicioBloque",
@@ -772,7 +836,7 @@ document.addEventListener("DOMContentLoaded", () => {
           r.falta || "",
           r.obs || "",
           r.syncedAt || "",
-          // PASO 3
+          // Contexto
           r.asignatura || "",
           r.bloqueInicio || "",
           r.horaInicioBloque || "",
@@ -800,7 +864,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const chips = [];
         chips.push(`<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`);
 
-        // PASO 3: chips de contexto (si existen)
+        // Chips de contexto
         if (r.asignatura && r.asignatura !== "-") {
           chips.push(`<span class="chip">${escapeHtml(r.asignatura)}</span>`);
         }
