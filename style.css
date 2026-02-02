@@ -20,6 +20,11 @@
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+html{
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
@@ -52,6 +57,26 @@ body {
   z-index: 100;
 }
 
+/* Ajustes para clases reales del HTML */
+.sub{ font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 6px; }
+.device-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  background: rgba(255,255,255,0.04);
+}
+.dot{
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+}
+
 .brand { display: flex; align-items: center; gap: 12px; }
 .logo {
   font-weight: 900;
@@ -72,7 +97,8 @@ body {
 }
 
 /* --- Contenedor Principal --- */
-.container {
+.container,
+.wrap {
   flex: 1;
   padding: 20px;
   max-width: 600px;
@@ -113,7 +139,7 @@ body {
   border-radius: 4px;
 }
 
-/* --- QR Reader Area (El cambio wow) --- */
+/* --- QR Reader Area --- */
 #qr-reader {
   width: 100%;
   background: #000;
@@ -133,7 +159,6 @@ body {
   border-radius: var(--radius-sm);
 }
 
-/* Animación de escaneo (simulada cuando está activo) */
 #qr-reader.scanning::after {
   content: '';
   position: absolute;
@@ -151,56 +176,12 @@ body {
   100% { opacity: 0.5; }
 }
 
-/* --- Botones Modernos --- */
-.btn {
-  border: none;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 15px;
-  padding: 14px 24px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.2s active;
-  display: inline-flex;
+/* --- Botones / Grupos --- */
+.btns{
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%; /* Botones full width en móvil */
-  position: relative;
-  overflow: hidden;
-}
-
-.btn:active { transform: scale(0.98); }
-
-.primary {
-  background: var(--primary);
-  color: white;
-  box-shadow: 0 4px 12px var(--primary-glow);
-}
-
-.primary:hover { background: #2563eb; }
-
-.danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.ok {
-  background: var(--success);
-  color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.warn {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning);
-}
-
-.muted-btn {
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--card-border);
 }
 
 /* --- Formularios --- */
@@ -224,7 +205,7 @@ input, select, textarea {
   color: white;
   padding: 14px;
   border-radius: var(--radius-sm);
-  font-size: 16px; /* Evita zoom en iOS */
+  font-size: 16px;
   outline: none;
   transition: border-color 0.2s;
   font-family: inherit;
@@ -235,7 +216,32 @@ input:focus, select:focus, textarea:focus {
   background: rgba(0, 0, 0, 0.3);
 }
 
-/* --- Historial (Lista) --- */
+/* Utilitarios usados en el HTML */
+.muted{ color: var(--text-muted); }
+.small { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+.notice{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.pill{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.empty{
+  color: var(--text-muted);
+  padding: 10px 0;
+}
+
+/* --- Historial --- */
 .historial { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 
 .item {
@@ -266,11 +272,15 @@ input:focus, select:focus, textarea:focus {
   letter-spacing: 0.5px;
 }
 
-/* Colores dinámicos de los chips */
+/* Compatibilidad: chips antiguos y los actuales del JS */
 .chip.ASISTENCIA { background: rgba(16, 185, 129, 0.2); color: #34d399; }
 .chip.TARDE { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 .chip.INASISTENCIA { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 .chip.CONVIVENCIA { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+
+.chip.tipo-tarde { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.chip.tipo-inasistencia { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+.chip.tipo-convivencia { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
 
 .code { font-size: 18px; font-weight: 700; letter-spacing: 1px; color: white; }
 .when { font-size: 12px; color: var(--text-muted); }
@@ -284,18 +294,7 @@ input:focus, select:focus, textarea:focus {
   border-left: 2px solid var(--card-border);
 }
 
-/* --- Footer --- */
-.footer {
-  text-align: center;
-  padding: 20px;
-  font-size: 12px;
-  color: var(--text-muted);
-  opacity: 0.6;
-}
-
-/* Utilitarios */
 .hidden { display: none !important; }
-.small { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
 /* Animación entrada */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -307,10 +306,11 @@ input:focus, select:focus, textarea:focus {
    HOTFIX UI (NO toca lógica): título + barra acciones
    ========================================================= */
 
-/* 1) Título menos grande en móvil y sin saltar exagerado */
+/* 1) Título menos grande y en una línea */
 .topbar .brand{
   margin: 0;
-  font-size: clamp(22px, 7vw, 34px);
+  display: block; /* importante: evita rarezas por flex */
+  font-size: clamp(18px, 5.8vw, 26px);
   line-height: 1.08;
   white-space: nowrap;
 }
@@ -328,4 +328,10 @@ input:focus, select:focus, textarea:focus {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 3) En pantallas muy estrechas, el “Dispositivo” baja para no forzar salto del título */
+@media (max-width: 420px){
+  .topbar{ flex-wrap: wrap; gap: 10px; }
+  .device-pill{ width: 100%; justify-content: flex-start; }
 }
