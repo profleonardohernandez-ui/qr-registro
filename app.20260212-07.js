@@ -42,13 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const KEY = "registros_qr_v1";
 
   // === PASO 3: Contexto de sesión (solo LOCAL + CSV + HISTORIAL) ===
-  // Lo guarda index.html bajo esta llave:
-  // { asignatura: "Economía 11°A", bloque: "1", updatedAt: "2026-02-01T...Z" }
   const KEY_CTX = "qr_contexto_sesion_v1";
 
   // Horario real (54 min por hora-clase). Descanso y almuerzo NO se manejan como bloques.
-  // Ajuste solicitado:
-  // 6° inicia 12:06 p.m., 7° 1:00 p.m., 8° 1:54 p.m.
   const BLOQUE_T0_24H = {
     "1": "07:00:00",
     "2": "07:54:00",
@@ -60,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "8": "13:54:00",
   };
 
-  // Etiquetas humanas del bloque para chips (lo que el docente entiende de un vistazo)
   const BLOQUE_LABEL = {
     "1": "1° (07:00 - 07:54)",
     "2": "2° (07:54 - 08:48)",
@@ -77,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "https://script.google.com/macros/s/AKfycbzbbTA4VFxI8hv2qNqZWaBgMOwrc22lmf1-MSv7Y5uf_gey96Fxbz_HJC2vP-7TO6s/exec";
   const KEY_DEVICE_ID = "qr_device_id_v1";
 
-  // Observaciones tipo (Llegada tarde) — por defecto + personalizadas
+  // Observaciones tipo (Llegada tarde)
   const KEY_OBS_TARDE = "obs_tipos_tarde_v1";
   const OBS_TARDE_DEFAULT = [
     "Estaba comprando en la tienda",
@@ -86,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "Estaba con otro profesor",
   ];
 
-  // Faltas Convivencia — ULTRACORTAS con código
+  // Faltas Convivencia
   const KEY_FALTAS_PREFIX = "faltas_convivencia_v1_";
   const FALTAS_DEFAULT = {
     TIPO_I: [
@@ -202,9 +197,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })(),
         falta: r.falta || "",
         obs: r.obs || "",
-        syncedAt: r.syncedAt || "", // sync marker
+        syncedAt: r.syncedAt || "",
 
-        // === PASO 3: CONTEXTO (compatibilidad con registros viejos) ===
         asignatura: r.asignatura || "",
         bloqueInicio: r.bloqueInicio || "",
         bloqueLabel: r.bloqueLabel || "",
@@ -232,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderRegistros();
   }
 
-  // --- Helpers ---
   function escapeHtml(str) {
     return String(str)
       .replaceAll("&", "&amp;")
@@ -285,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .join(",");
   }
 
-  // --- Dynamic options (ObsTipo / Faltas) ---
   let obsTardeList = loadList(KEY_OBS_TARDE, OBS_TARDE_DEFAULT);
 
   function refreshObsTipoOptions() {
@@ -375,7 +367,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!show) faltaOtra.value = "";
   }
 
-  // === Google Sheets Sync helpers ===
   function getDeviceId() {
     let id = localStorage.getItem(KEY_DEVICE_ID);
     if (id) return id;
@@ -411,7 +402,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportedAt = new Date().toISOString();
     const deviceId = getDeviceId();
 
-    // ✅ PASO 4: incluir CONTEXTO en el payload (sin tocar nada más)
     const records = pendingSync.map((r) => ({
       uid: makeUid(r),
       timestamp: r.timestamp || "",
@@ -424,16 +414,8 @@ document.addEventListener("DOMContentLoaded", () => {
       nivel: r.nivel || "",
       falta: r.falta || "",
       obs: r.obs || "",
-
-      // --- CONTEXTO ---
-      asignatura: r.asignatura || "",
-      bloqueInicio: r.bloqueInicio || "",
-      bloqueLabel: r.bloqueLabel || "",
-      horaInicioBloque: r.horaInicioBloque || "",
-      contextoUpdatedAt: r.contextoUpdatedAt || "",
     }));
 
-    // UI lock
     if (syncBtn) {
       syncBtn.disabled = true;
       syncBtn.textContent = "☁️ Sincronizando...";
@@ -461,7 +443,6 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(out && out.error ? out.error : "No se pudo confirmar respuesta de Google");
       }
 
-      // Confirmado OK: ofrecer borrar lo enviado
       const uids = new Set(records.map((x) => x.uid));
       const enviados = pendingSync.length;
 
@@ -502,12 +483,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       if (syncBtn) {
         syncBtn.disabled = false;
-        syncBtn.textContent = "☁️ Sincronizar a Google Sheets";
+        // ✅ ÚNICO CAMBIO: volver a "Sincronizar GS"
+        syncBtn.textContent = "☁️ Sincronizar GS";
       }
     }
   }
 
-  // === PASO 3: Contexto → puente de datos y cálculo de T0 ===
   function normalizeBloqueValue(v) {
     const s = String(v ?? "").trim();
     const m = s.match(/(\d+)/);
@@ -515,7 +496,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getContextoSesion() {
-    // 0) Lectura del DOM (lo que el docente VE en pantalla). Prioridad máxima.
     const selAsig = document.getElementById("contextoClase");
     const selBloq = document.getElementById("horaClaseInicio");
 
@@ -531,11 +511,9 @@ document.addEventListener("DOMContentLoaded", () => {
       domBloqLabel = String(domBloqLabel || "").trim();
     }
 
-    // 1) Lectura de localStorage (lo setea index.html con el botón "Alistar")
     const raw = localStorage.getItem(KEY_CTX);
     const ctx = raw ? safeParseJSON(raw, null) : null;
 
-    // Acepta llaves alternativas por compatibilidad con versiones previas/terceras opiniones
     const lsAsigRaw =
       ctx && typeof ctx.asignatura === "string"
         ? ctx.asignatura
@@ -562,11 +540,9 @@ document.addEventListener("DOMContentLoaded", () => {
         ? ctx.contextoUpdatedAt
         : "";
 
-    // 2) Resolución final: DOM > localStorage
     const asignatura = domAsig || lsAsig || "";
     const bloqueInicio = domBloq || lsBloq || "";
 
-    // Bloque label: preferimos el texto del <option> seleccionado (más preciso), sino catálogo.
     let bloqueLabel = domBloqLabel || "";
     if (!bloqueLabel && ctx && typeof ctx.bloqueLabel === "string") {
       bloqueLabel = ctx.bloqueLabel.trim();
@@ -578,9 +554,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
     const contextoUpdatedAt = lsUpdatedAt || "";
 
-    // 3) Persistencia defensiva:
-    // Si DOM tiene datos, "congelamos" ese contexto en localStorage para consistencia.
-    // (Esto NO toca nada del flujo existente; solo evita que la app quede ciega si se olvidó "Alistar").
     if (domAsig && domBloq) {
       try {
         localStorage.setItem(
@@ -608,7 +581,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return reg;
   }
 
-  // --- Scan ---
   async function startScan() {
     formEvento.style.display = "none";
     qrReader.style.display = "block";
@@ -644,7 +616,6 @@ document.addEventListener("DOMContentLoaded", () => {
             obs: "",
             syncedAt: "",
 
-            // === PASO 3: CONTEXTO (se congela al escanear) ===
             asignatura: "",
             bloqueInicio: "",
             bloqueLabel: "",
@@ -652,7 +623,6 @@ document.addEventListener("DOMContentLoaded", () => {
             contextoUpdatedAt: "",
           };
 
-          // congela el contexto en el momento del escaneo
           inyectarContextoEnRegistro(pending);
 
           codigoActual.textContent = `Código: ${codigoQR}`;
@@ -698,7 +668,6 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // --- Form behavior ---
   function updateFormByTipo() {
     const t = tipo.value;
 
@@ -754,7 +723,6 @@ document.addEventListener("DOMContentLoaded", () => {
       pending.nivel = null;
       pending.falta = "";
 
-      // Guardar “otra” observación de tarde para futuras veces
       if (pending.tipo === "TARDE" && obsTipo?.value === "_OTRA") {
         const nueva = (obs.value || "").trim();
         if (nueva) {
@@ -786,9 +754,6 @@ document.addEventListener("DOMContentLoaded", () => {
       pending.falta = "";
     }
 
-    // PASO 3 (definitivo): inyectar SIEMPRE el contexto justo antes de guardar.
-    // Esto captura el estado real de la sesión en el momento de crear el registro,
-    // incluso si el usuario cambió el selector o no presionó "Alistar".
     inyectarContextoEnRegistro(pending);
 
     addRegistro(pending);
@@ -813,7 +778,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "falta",
       "observacion",
       "syncedAt",
-      // === PASO 3: CONTEXTO ===
       "asignatura",
       "bloqueInicio",
       "bloqueLabel",
@@ -835,7 +799,6 @@ document.addEventListener("DOMContentLoaded", () => {
           r.falta || "",
           r.obs || "",
           r.syncedAt || "",
-          // CONTEXTO
           r.asignatura || "",
           r.bloqueInicio || "",
           r.bloqueLabel || "",
@@ -862,7 +825,6 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((r) => {
         const chips = [];
 
-        // === PASO 3: chips de contexto (primero) ===
         const asig = r.asignatura || "";
         const bloq = r.bloqueInicio || "";
         const bloqLabel = r.bloqueLabel || "";
@@ -879,7 +841,6 @@ document.addEventListener("DOMContentLoaded", () => {
           chips.push(`<span class="chip">T0: ${escapeHtml(t0)}</span>`);
         }
 
-        // chips existentes
         chips.push(
           `<span class="chip ${chipTipoClass(r.tipo)}">${escapeHtml(r.tipo)}</span>`
         );
@@ -922,7 +883,6 @@ document.addEventListener("DOMContentLoaded", () => {
     historial.innerHTML = html;
   }
 
-  // --- Bindings ---
   scanBtn?.addEventListener("click", startScan);
   cancelScanBtn?.addEventListener("click", cancelScan);
   guardarBtn?.addEventListener("click", guardarEvento);
@@ -938,7 +898,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   exportarBtn?.addEventListener("click", exportarCSV);
 
-  // --- Init ---
   refreshObsTipoOptions();
   refreshFaltaOptions();
   renderRegistros();
