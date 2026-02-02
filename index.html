@@ -7,6 +7,45 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./style.css" />
   <title>QR Profe — Registro</title>
+
+  <!-- ✅ SOLO DISEÑO (no toca lógica): título más pequeño + barra de acciones en una línea -->
+  <style>
+    /* 1) Título principal: más pequeño y SIN salto de línea */
+    .topbar .brand{
+      margin: 0;
+      font-size: clamp(26px, 6.2vw, 34px);
+      line-height: 1.05;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 2) Barra de acciones: 3 botones en una sola línea */
+    .btns.actions-bar{
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .btns.actions-bar button{
+      flex: 1 1 0;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 10px 8px;
+      font-size: 14px;
+    }
+
+    /* Ajuste extra para pantallas muy angostas */
+    @media (max-width: 380px){
+      .btns.actions-bar{ gap: 8px; }
+      .btns.actions-bar button{
+        padding: 9px 6px;
+        font-size: 13px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -162,9 +201,8 @@
     <section class="card">
       <div class="card-title">2) Historial y acciones</div>
 
-      <!-- 🔧 Cambio: forzar una sola línea -->
+      <!-- ✅ Una sola línea -->
       <div class="btns actions-bar">
-        <!-- 🔧 Cambio: texto corto -->
         <button id="syncBtn">☁️ Sincronizar GS</button>
         <button id="exportarBtn">⬇️ Exportar CSV</button>
         <button id="limpiarBtn" class="danger">🧹 Limpiar</button>
