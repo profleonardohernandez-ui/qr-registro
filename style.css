@@ -302,3 +302,30 @@ input:focus, select:focus, textarea:focus {
 .card { animation: fadeIn 0.4s ease-out forwards; }
 .card:nth-child(2) { animation-delay: 0.1s; }
 .card:nth-child(3) { animation-delay: 0.2s; }
+
+/* =========================================================
+   HOTFIX UI (NO toca lógica): título + barra acciones
+   ========================================================= */
+
+/* 1) Título menos grande en móvil y sin saltar exagerado */
+.topbar .brand{
+  margin: 0;
+  font-size: clamp(22px, 7vw, 34px);
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
+/* 2) Sincronizar / Exportar / Limpiar en una sola línea */
+.actions-bar{
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+.actions-bar > button{
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
