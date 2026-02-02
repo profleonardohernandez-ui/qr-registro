@@ -72,6 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
     "https://script.google.com/macros/s/AKfycbzbbTA4VFxI8hv2qNqZWaBgMOwrc22lmf1-MSv7Y5uf_gey96Fxbz_HJC2vP-7TO6s/exec";
   const KEY_DEVICE_ID = "qr_device_id_v1";
 
+  // ✅ Coherencia con index.html (texto corto)
+  const SYNC_BTN_LABEL = "☁️ Sincronizar GS";
+
   // Observaciones tipo (Llegada tarde)
   const KEY_OBS_TARDE = "obs_tipos_tarde_v1";
   const OBS_TARDE_DEFAULT = [
@@ -402,6 +405,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportedAt = new Date().toISOString();
     const deviceId = getDeviceId();
 
+    // ✅ FIX CRÍTICO: incluir CONTEXTO en el payload (coherente con Código.gs)
     const records = pendingSync.map((r) => ({
       uid: makeUid(r),
       timestamp: r.timestamp || "",
@@ -414,6 +418,13 @@ document.addEventListener("DOMContentLoaded", () => {
       nivel: r.nivel || "",
       falta: r.falta || "",
       obs: r.obs || "",
+
+      // === CONTEXTO ===
+      asignatura: r.asignatura || "",
+      bloqueInicio: r.bloqueInicio || "",
+      bloqueLabel: r.bloqueLabel || "",
+      horaInicioBloque: r.horaInicioBloque || "",
+      contextoUpdatedAt: r.contextoUpdatedAt || "",
     }));
 
     if (syncBtn) {
@@ -483,8 +494,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       if (syncBtn) {
         syncBtn.disabled = false;
-        // ✅ ÚNICO CAMBIO: volver a "Sincronizar GS"
-        syncBtn.textContent = "☁️ Sincronizar GS";
+        // ✅ Coherente con index.html
+        syncBtn.textContent = SYNC_BTN_LABEL;
       }
     }
   }
@@ -554,14 +565,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const horaInicioBloque = BLOQUE_T0_24H[bloqueInicio] || "";
     const contextoUpdatedAt = lsUpdatedAt || "";
 
+    // ✅ Persistencia defensiva SIN romper el candado:
+    // preserva propiedades existentes (ej. "locked") en KEY_CTX
     if (domAsig && domBloq) {
       try {
+        const prevRaw = localStorage.getItem(KEY_CTX);
+        const prev = prevRaw ? safeParseJSON(prevRaw, {}) : {};
         localStorage.setItem(
           KEY_CTX,
           JSON.stringify({
+            ...(prev && typeof prev === "object" ? prev : {}),
             asignatura: domAsig,
             bloque: domBloq,
-            bloqueLabel: domBloqLabel || (domBloq ? (BLOQUE_LABEL[domBloq] || `${domBloq}°`) : ""),
+            bloqueLabel:
+              domBloqLabel ||
+              (domBloq ? (BLOQUE_LABEL[domBloq] || `${domBloq}°`) : ""),
             updatedAt: new Date().toISOString(),
           })
         );
